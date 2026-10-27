@@ -74,7 +74,7 @@ def cashier_headers(client):
 def make_product(client, admin_headers):
     counter = {"n": 0}
 
-    def _make(name="Widget", price=10.0, stock=10, barcode=None):
+    def _make(name="Widget", price=10.0, stock=10, barcode=None, **extra):
         counter["n"] += 1
         response = client.post(
             "/api/v1/products/",
@@ -83,6 +83,7 @@ def make_product(client, admin_headers):
                 "barcode": barcode or f"BC-{counter['n']:04d}",
                 "price": price,
                 "stock_quantity": stock,
+                **extra,
             },
             headers=admin_headers,
         )

@@ -101,17 +101,30 @@ def test_stock_movements_are_logged(client, admin_headers, make_product):
     product = make_product(stock=5)
     base = f"/api/v1/products/{product['id']}"
 
-    client.post(f"{base}/increase-stock", json={"quantity": 3}, headers=admin_headers)
+    client.post(f"{base}/increase-stock", json={"quantity": 3, "note": "Invoice 42"}, headers=admin_headers)
     client.post(f"{base}/decrease-stock", json={"quantity": 2}, headers=admin_headers)
-    client.patch(base, json={"stock_quantity": 10}, headers=admin_headers)
 
     movements = client.get(f"{base}/movements", headers=admin_headers).json()
-    summary = [(m["reason"], m["change"], m["quantity_after"]) for m in reversed(movements)]
+    summary = [(m["reason"], m["change"], m["quantity_after"], m["note"]) for m in reversed(movements)]
 
     assert summary == [
-        ("initial", 5, 5),
-        ("restock", 3, 8),
-        ("stock_out", -2, 6),
-        ("adjustment", 4, 10),
+        ("initial", 5, 5, None),
+        ("restock", 3, 8, "Invoice 42"),
+        ("stock_out", -2, 6, None),
     ]
     assert all(m["username"] == "admin" for m in movements)
+    assert all(m["warehouse_name"] == "Main Warehouse" for m in movements)
+
+
+def test_edit_does_not_change_stock(client, admin_headers, make_product):
+    product = make_product(stock=5)
+
+    response = client.patch(
+        f"/api/v1/products/{product['id']}",
+        json={"name": "Renamed", "stock_quantity": 99},
+        headers=admin_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["name"] == "Renamed"
+    assert response.json()["stock_quantity"] == 5
