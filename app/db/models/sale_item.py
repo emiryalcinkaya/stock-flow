@@ -2,6 +2,7 @@ from sqlalchemy import CheckConstraint, Column, ForeignKey, Integer, Numeric, St
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+from app.db.models.product import QUANTITY
 
 
 class SaleItem(Base):
@@ -14,12 +15,13 @@ class SaleItem(Base):
     sale_id = Column(Integer, ForeignKey("sales.id"), nullable=False, index=True)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False, index=True)
 
-    # Snapshot of the product at the moment of sale, so later edits
-    # to the product never change historical sales.
+    # Snapshot of the product at the moment of the stock out, so later edits
+    # to the product never change history.
     product_name = Column(String, nullable=False)
     product_barcode = Column(String, nullable=False)
+    unit = Column(String(10), nullable=False, default="pcs", server_default="pcs")
 
-    quantity = Column(Integer, nullable=False)
+    quantity = Column(QUANTITY, nullable=False)
     unit_price = Column(Numeric(10, 2), nullable=False)
     total_price = Column(Numeric(10, 2), nullable=False)
 

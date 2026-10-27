@@ -7,3 +7,5 @@ class DashboardSummary(BaseModel):
     low_stock_threshold: int
     total_sales: int
     revenue: float
+    stock_value: float
+    warehouse_count: int

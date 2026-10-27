@@ -3,21 +3,26 @@ from typing import List, Literal, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import ADMIN, get_current_user, require_role
+from app.core.units import is_valid_quantity_for_unit
+from app.db.models.category import Category
 from app.db.models.product import Product
 from app.db.models.stock_movement import MovementReason, StockMovement
 from app.db.models.user import User
+from app.db.models.warehouse import StockLevel
 from app.db.session import get_db
 from app.schemas.product import (
     ProductCreate,
     ProductResponse,
     ProductUpdate,
+    StockLevelResponse,
     StockMovementResponse,
+    StockTransfer,
     StockUpdate,
 )
-from app.services.stock import change_stock, get_product_for_update
+from app.services.stock import change_stock, get_product_for_update, get_warehouse
 
 router = APIRouter(prefix="/products", tags=["products"])
 
@@ -40,6 +45,11 @@ def _ensure_barcode_free(db: Session, barcode: str, exclude_id: Optional[int] = 
     )
 
 
+def _ensure_category_exists(db: Session, category_id: Optional[int]) -> None:
+    if category_id is not None and not db.get(Category, category_id):
+        raise HTTPException(status_code=404, detail="Category not found")
+
+
 def _commit(db: Session) -> None:
     try:
         db.commit()
@@ -56,18 +66,23 @@ def create_product(
     current_user: User = Depends(require_role(ADMIN)),
 ):
     _ensure_barcode_free(db, data.barcode)
+    _ensure_category_exists(db, data.category_id)
+    warehouse = get_warehouse(db, data.warehouse_id)
 
     product = Product(
         name=data.name,
         barcode=data.barcode,
+        category_id=data.category_id,
+        unit=data.unit,
         price=data.price,
+        min_stock=data.min_stock,
         stock_quantity=0,
         is_active=True,
     )
     db.add(product)
     db.flush()
 
-    change_stock(db, product, data.stock_quantity, MovementReason.INITIAL, user_id=current_user.id)
+    change_stock(db, product, warehouse, data.stock_quantity, MovementReason.INITIAL, user_id=current_user.id)
 
     _commit(db)
     db.refresh(product)
@@ -78,6 +93,8 @@ def create_product(
 def get_products(
     status: Literal["active", "archived"] = "active",
     search: Optional[str] = Query(default=None, max_length=100),
+    category_id: Optional[int] = None,
+    low_stock: bool = False,
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -86,11 +103,19 @@ def get_products(
     if status == "archived" and current_user.role.name != ADMIN:
         raise HTTPException(status_code=403, detail="Not enough permissions")
 
-    query = db.query(Product).filter(Product.is_active.is_(status == "active"))
+    query = (
+        db.query(Product)
+        .options(joinedload(Product.category))
+        .filter(Product.is_active.is_(status == "active"))
+    )
 
     if search:
         pattern = f"%{search.strip()}%"
         query = query.filter(or_(Product.name.ilike(pattern), Product.barcode.ilike(pattern)))
+    if category_id is not None:
+        query = query.filter(Product.category_id == category_id)
+    if low_stock:
+        query = query.filter(Product.low_stock_condition())
 
     return query.order_by(Product.id).offset(skip).limit(limit).all()
 
@@ -120,6 +145,7 @@ def update_product(
     current_user: User = Depends(require_role(ADMIN)),
 ):
     product = get_product_for_update(db, product_id)
+    sent = data.model_fields_set
 
     if data.barcode is not None and data.barcode != product.barcode:
         _ensure_barcode_free(db, data.barcode, exclude_id=product_id)
@@ -128,17 +154,23 @@ def update_product(
     if data.name is not None:
         product.name = data.name
 
-    if data.price is not None:
-        product.price = data.price
+    if data.unit is not None and data.unit != product.unit:
+        if not is_valid_quantity_for_unit(product.stock_quantity, data.unit):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Current stock ({product.stock_quantity.normalize()}) is not a whole number "
+                f"and can't be counted in '{data.unit}'",
+            )
+        product.unit = data.unit
 
-    if data.stock_quantity is not None:
-        change_stock(
-            db,
-            product,
-            data.stock_quantity - product.stock_quantity,
-            MovementReason.ADJUSTMENT,
-            user_id=current_user.id,
-        )
+    # These three can be cleared by sending null explicitly.
+    if "category_id" in sent:
+        _ensure_category_exists(db, data.category_id)
+        product.category_id = data.category_id
+    if "price" in sent:
+        product.price = data.price
+    if "min_stock" in sent:
+        product.min_stock = data.min_stock
 
     _commit(db)
     db.refresh(product)
@@ -183,7 +215,11 @@ def increase_stock(
     current_user: User = Depends(require_role(ADMIN)),
 ):
     product = get_product_for_update(db, product_id)
-    change_stock(db, product, data.quantity, MovementReason.RESTOCK, user_id=current_user.id)
+    warehouse = get_warehouse(db, data.warehouse_id)
+    change_stock(
+        db, product, warehouse, data.quantity, MovementReason.RESTOCK,
+        user_id=current_user.id, note=data.note,
+    )
 
     db.commit()
     db.refresh(product)
@@ -198,11 +234,58 @@ def decrease_stock(
     current_user: User = Depends(require_role(ADMIN)),
 ):
     product = get_product_for_update(db, product_id)
-    change_stock(db, product, -data.quantity, MovementReason.STOCK_OUT, user_id=current_user.id)
+    warehouse = get_warehouse(db, data.warehouse_id)
+    change_stock(
+        db, product, warehouse, -data.quantity, MovementReason.STOCK_OUT,
+        user_id=current_user.id, note=data.note,
+    )
 
     db.commit()
     db.refresh(product)
     return product
+
+
+@router.post("/{product_id}/transfer", response_model=ProductResponse)
+def transfer_stock(
+    product_id: int,
+    data: StockTransfer,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_role(ADMIN)),
+):
+    product = get_product_for_update(db, product_id)
+    source = get_warehouse(db, data.from_warehouse_id)
+    destination = get_warehouse(db, data.to_warehouse_id)
+
+    change_stock(
+        db, product, source, -data.quantity, MovementReason.TRANSFER_OUT,
+        user_id=current_user.id, note=data.note,
+    )
+    change_stock(
+        db, product, destination, data.quantity, MovementReason.TRANSFER_IN,
+        user_id=current_user.id, note=data.note,
+    )
+
+    db.commit()
+    db.refresh(product)
+    return product
+
+
+@router.get("/{product_id}/stock-levels", response_model=List[StockLevelResponse])
+def get_stock_levels(
+    product_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not db.query(Product.id).filter(Product.id == product_id).first():
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return (
+        db.query(StockLevel)
+        .options(joinedload(StockLevel.warehouse))
+        .filter(StockLevel.product_id == product_id)
+        .order_by(StockLevel.warehouse_id)
+        .all()
+    )
 
 
 @router.get("/{product_id}/movements", response_model=List[StockMovementResponse])
@@ -211,13 +294,14 @@ def get_stock_movements(
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_role(ADMIN)),
+    current_user: User = Depends(get_current_user),
 ):
     if not db.query(Product.id).filter(Product.id == product_id).first():
         raise HTTPException(status_code=404, detail="Product not found")
 
     return (
         db.query(StockMovement)
+        .options(joinedload(StockMovement.user), joinedload(StockMovement.warehouse))
         .filter(StockMovement.product_id == product_id)
         .order_by(StockMovement.id.desc())
         .offset(skip)
