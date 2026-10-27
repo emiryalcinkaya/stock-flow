@@ -11,14 +11,21 @@ Instead of a plain CRUD app, the project focuses on **how data should behave in 
 
 ## Features
 
-- **Products** – create, edit, search, archive and restore products with unique barcodes
-- **Stock control** – stock in / stock out, enforced never to go below zero (API checks *and* a database constraint)
-- **Sales** – multi-item sales processed in a single transaction, with row locking so two cashiers can never sell the same last unit
-- **Sale snapshots** – each sale line stores the product name, barcode and price at the time of sale, so editing a product never rewrites history
-- **Cancellation** – admins can cancel a sale; items go back into stock and the sale is excluded from revenue
-- **Audit log** – every stock change (initial, restock, stock out, adjustment, sale, cancellation) is recorded with who did it
-- **Roles** – `admin` manages products and sales, `cashier` processes sales; enforced by the API and reflected in the UI
-- **Dashboard** – product count, low-stock count, completed sales and revenue
+StockFlow is a general-purpose stock tracking system: it fits a hardware store, a food warehouse or an online shop alike. Features that only some businesses need stay out of the way until they are used.
+
+- **Products** – create, edit, search, archive and restore products with unique barcodes / SKUs
+- **Categories** – group products and filter by category
+- **Units & decimal quantities** – pieces, boxes, packs, kg, g, litres, ml, metres; whole-number units reject fractions
+- **Per-product minimum stock** – each product can have its own warning level; low-stock products are listed on the dashboard
+- **Optional prices** – track by quantity only, or add a price to get stock value and sales revenue
+- **Warehouses** – stock per location with transfers between them; single-location setups never see warehouse choices
+- **Stock in / stock out** – with notes (supplier, document no) and stock-out reasons: sale, internal use, waste, return to supplier, other
+- **Concurrency-safe** – stock outs run in a single transaction with row locking, so two users can never take the same last unit
+- **Snapshots** – each stock-out line stores the product name, barcode, unit and price at that moment
+- **Cancellation** – admins can cancel a stock out; items go back to the same warehouse
+- **Audit log** – every stock change is recorded with warehouse, user and note, and shown as a per-product history
+- **Roles** – `admin` manages products, stock and settings; `cashier` records stock outs and views stock
+- **Dashboard** – product count, low-stock list, stock value, sales revenue and recent stock outs
 
 ## Design decisions
 
@@ -124,7 +131,7 @@ All settings are read from environment variables or `.env` (see [`.env.example`]
 | `secret_key` | – | JWT signing key (min. 16 chars) |
 | `access_token_expire_minutes` | `60` | Token lifetime |
 | `cors_origins` | localhost:5500 / 8080 | Comma separated allowed frontend origins |
-| `low_stock_threshold` | `5` | Stock level considered "low" |
+| `low_stock_threshold` | `5` | Default minimum stock for products without their own |
 | `login_max_attempts` / `login_lockout_seconds` | `5` / `300` | Failed-login rate limit |
 
 The frontend calls `http://127.0.0.1:8000/api/v1` by default. To change it, define `window.STOCKFLOW_API_URL` before the page scripts load.
@@ -137,14 +144,16 @@ Interactive docs are available at `/docs` when the API is running.
 | --- | --- | --- |
 | `POST` | `/api/v1/auth/login` | public |
 | `GET` | `/api/v1/auth/me` | any |
-| `GET` | `/api/v1/products/?search=&status=active\|archived&skip=&limit=` | any (archived: admin) |
+| `GET` | `/api/v1/products/?search=&category_id=&low_stock=&status=active\|archived&skip=&limit=` | any (archived: admin) |
 | `POST` | `/api/v1/products/` | admin |
 | `PATCH` / `DELETE` | `/api/v1/products/{id}` | admin |
-| `POST` | `/api/v1/products/{id}/increase-stock` · `/decrease-stock` · `/restore` | admin |
-| `GET` | `/api/v1/products/{id}/movements` | admin |
-| `GET` / `POST` | `/api/v1/sales/?date_from=&date_to=&status=&skip=&limit=` | any |
+| `POST` | `/api/v1/products/{id}/increase-stock` · `/decrease-stock` · `/transfer` · `/restore` | admin |
+| `GET` | `/api/v1/products/{id}/stock-levels` · `/movements` | any |
+| `GET` / `POST` | `/api/v1/sales/?reason=&warehouse_id=&date_from=&date_to=&status=&skip=&limit=` (stock outs) | any |
 | `GET` | `/api/v1/sales/{id}` | any |
 | `POST` | `/api/v1/sales/{id}/cancel` | admin |
+| `GET` | `/api/v1/units` · `/api/v1/categories` · `/api/v1/warehouses` · `/api/v1/warehouses/{id}/stock` | any |
+| `POST` / `PATCH` / `DELETE` | `/api/v1/categories/{id}` · `POST` / `PATCH` `/api/v1/warehouses/{id}` | admin |
 | `GET` | `/api/v1/dashboard/summary` | any |
 | `GET` | `/api/v1/health` | public |
 
@@ -164,10 +173,13 @@ The suite covers authentication, permissions, stock rules, sale rollback, snapsh
 
 ## Roadmap
 
-- User management screens (create / deactivate users from the UI)
-- Stock movement history view in the frontend
-- Reports: daily / monthly revenue and best-selling products
-- Shared rate-limit store (e.g. Redis) for multi-worker deployments
+- Stock counting with difference correction
+- Suppliers and purchase orders
+- User management screens (create / deactivate users, change password)
+- Reports: slow-moving items, monthly in/out summary, stock value over time
+- Excel / CSV import and export
+- Batch and expiry date tracking (opt-in per product)
+- Turkish interface
 
 ## License
 
