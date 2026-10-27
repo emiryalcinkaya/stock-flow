@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StockFlow Create Sale</title>
+  <title>StockFlow Stock Out</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/sales.css" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -30,13 +30,18 @@
         </a>
 
         <a class="nav-link active" href="sales.html">
-          <i data-lucide="shopping-cart"></i>
-          <span>Create Sale</span>
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
         </a>
 
         <a class="nav-link" href="sales-history.html">
           <i data-lucide="history"></i>
-          <span>Sales History</span>
+          <span>Stock Out History</span>
+        </a>
+
+        <a class="nav-link" href="settings.html" data-role="admin">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
         </a>
       </nav>
 
@@ -55,12 +60,40 @@
     <main class="content">
       <div class="topbar">
         <div>
-          <h1 class="page-title">Create Sale</h1>
-          <p class="page-subtitle">Build a clean cart flow with live stock-backed data.</p>
+          <h1 class="page-title">Stock Out</h1>
+          <p class="page-subtitle">Record items leaving stock: sales, internal use, waste or returns.</p>
         </div>
       </div>
 
       <section class="card">
+        <div class="card-header">
+          <h3>Details</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="reasonSelect">Reason</label>
+              <div class="select-shell">
+                <select id="reasonSelect" class="select"></select>
+              </div>
+            </div>
+
+            <div class="field" data-multi-warehouse hidden>
+              <label for="warehouseSelect">Warehouse</label>
+              <div class="select-shell">
+                <select id="warehouseSelect" class="select"></select>
+              </div>
+            </div>
+
+            <div class="field" style="grid-column: 1 / -1;">
+              <label for="noteInput">Note <span class="field-hint">(customer, document no, reason...)</span></label>
+              <input id="noteInput" class="input" type="text" maxlength="500" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section-spacing">
         <div class="card-header">
           <h3>Add Item</h3>
         </div>
@@ -74,13 +107,13 @@
             </div>
 
             <div class="field">
-              <label id="saleQtyLabel">Quantity</label>
+              <label id="saleQtyLabel" for="saleQtyValue">Quantity</label>
               <div class="quantity-stepper" role="group" aria-labelledby="saleQtyLabel">
-                <button class="stepper-btn" id="decreaseQtyBtn" type="button">
+                <button class="stepper-btn" id="decreaseQtyBtn" type="button" aria-label="Decrease quantity">
                   <i data-lucide="minus"></i>
                 </button>
-                <div class="stepper-value" id="saleQtyValue">1</div>
-                <button class="stepper-btn" id="increaseQtyBtn" type="button">
+                <input class="stepper-value stepper-input" id="saleQtyValue" type="number" min="0" step="1" value="1" />
+                <button class="stepper-btn" id="increaseQtyBtn" type="button" aria-label="Increase quantity">
                   <i data-lucide="plus"></i>
                 </button>
               </div>
@@ -88,8 +121,8 @@
 
             <div>
               <button id="addToCartButton" class="btn btn-primary icon-btn" type="button">
-                <i data-lucide="shopping-cart"></i>
-                <span>Add to Cart</span>
+                <i data-lucide="plus"></i>
+                <span>Add Item</span>
               </button>
             </div>
           </div>
@@ -99,7 +132,7 @@
       <div class="sales-side-grid section-spacing">
         <section class="card">
           <div class="card-header">
-            <h3>Current Cart</h3>
+            <h3>Items</h3>
           </div>
           <div class="card-body">
             <div class="table-wrap">
@@ -120,12 +153,12 @@
             <div class="cart-empty-zone"></div>
 
             <div class="sales-summary section-spacing">
-              <div class="sales-meta">Total sale amount</div>
+              <div class="sales-meta">Total value</div>
               <div id="cartTotal" class="sales-total">$0.00</div>
               <div>
                 <button id="submitSaleButton" class="btn btn-primary icon-btn" type="button">
-                  <i data-lucide="shopping-bag"></i>
-                  <span>Create Sale</span>
+                  <i data-lucide="check"></i>
+                  <span>Record Stock Out</span>
                 </button>
               </div>
             </div>

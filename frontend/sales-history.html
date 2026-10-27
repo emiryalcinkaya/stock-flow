@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>StockFlow Sales History</title>
+  <title>StockFlow Stock Out History</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/sales.css" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
@@ -30,13 +30,18 @@
         </a>
 
         <a class="nav-link" href="sales.html">
-          <i data-lucide="shopping-cart"></i>
-          <span>Create Sale</span>
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
         </a>
 
         <a class="nav-link active" href="sales-history.html">
           <i data-lucide="history"></i>
-          <span>Sales History</span>
+          <span>Stock Out History</span>
+        </a>
+
+        <a class="nav-link" href="settings.html" data-role="admin">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
         </a>
       </nav>
 
@@ -55,15 +60,15 @@
     <main class="content">
       <div class="topbar">
         <div>
-          <h1 class="page-title">Sales History</h1>
-          <p class="page-subtitle">Review all sales and inspect sale details.</p>
+          <h1 class="page-title">Stock Out History</h1>
+          <p class="page-subtitle">Review everything that left stock and inspect the details.</p>
         </div>
       </div>
 
       <section class="grid grid-2">
         <div class="card">
           <div class="card-header">
-            <h3>All Sales</h3>
+            <h3>All Stock Outs</h3>
           </div>
           <div class="card-body">
             <form id="salesFilterForm" class="sales-filter">
@@ -74,6 +79,12 @@
               <div class="field">
                 <label for="dateTo">To</label>
                 <input id="dateTo" class="input" type="date" />
+              </div>
+              <div class="field">
+                <label for="reasonFilter">Reason</label>
+                <div class="select-shell">
+                  <select id="reasonFilter" class="select"></select>
+                </div>
               </div>
               <div class="sales-filter-actions">
                 <button class="btn btn-primary" type="submit">Filter</button>
@@ -86,6 +97,7 @@
                 <thead>
                   <tr>
                     <th>ID</th>
+                    <th>Reason</th>
                     <th>Total</th>
                     <th>Status</th>
                     <th>Date</th>
@@ -100,10 +112,10 @@
 
         <div class="card">
           <div class="card-header">
-            <h3>Sale Detail</h3>
+            <h3>Details</h3>
           </div>
           <div class="card-body" id="saleDetailPanel">
-            <div class="empty-state">Select a sale to see the details.</div>
+            <div class="empty-state">Select a record to see the details.</div>
           </div>
         </div>
       </section>

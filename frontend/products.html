@@ -30,13 +30,18 @@
         </a>
 
         <a class="nav-link" href="sales.html">
-          <i data-lucide="shopping-cart"></i>
-          <span>Create Sale</span>
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
         </a>
 
         <a class="nav-link" href="sales-history.html">
           <i data-lucide="history"></i>
-          <span>Sales History</span>
+          <span>Stock Out History</span>
+        </a>
+
+        <a class="nav-link" href="settings.html" data-role="admin">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
         </a>
       </nav>
 
@@ -73,18 +78,44 @@
             </div>
 
             <div class="field">
-              <label for="barcode">Barcode</label>
+              <label for="barcode">Barcode / SKU</label>
               <input id="barcode" class="input" type="text" required />
             </div>
 
             <div class="field">
-              <label for="price">Price</label>
-              <input id="price" class="input" type="number" step="0.01" min="0.01" required />
+              <label for="category">Category</label>
+              <div class="select-shell">
+                <select id="category" class="select"></select>
+              </div>
             </div>
 
             <div class="field">
-              <label for="stock_quantity">Stock</label>
-              <input id="stock_quantity" class="input" type="number" min="0" step="1" required />
+              <label for="unit">Unit</label>
+              <div class="select-shell">
+                <select id="unit" class="select"></select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="stock_quantity">Opening Stock</label>
+              <input id="stock_quantity" class="input" type="number" min="0" step="1" value="0" required />
+            </div>
+
+            <div class="field" data-multi-warehouse hidden>
+              <label for="warehouse">Warehouse</label>
+              <div class="select-shell">
+                <select id="warehouse" class="select"></select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="min_stock">Minimum Stock <span class="field-hint">(optional)</span></label>
+              <input id="min_stock" class="input" type="number" min="0" step="1" placeholder="Default" />
+            </div>
+
+            <div class="field">
+              <label for="price">Price <span class="field-hint">(optional)</span></label>
+              <input id="price" class="input" type="number" step="0.01" min="0.01" />
             </div>
 
             <div style="grid-column: 1 / -1;">
@@ -100,7 +131,16 @@
       <section class="card">
         <div class="card-header">
           <h3>Active Products</h3>
-          <input id="productSearch" class="input table-search" type="search" placeholder="Search name or barcode" aria-label="Search products" />
+          <div class="table-filters">
+            <input id="productSearch" class="input table-search" type="search" placeholder="Search name or barcode" aria-label="Search products" />
+            <div class="select-shell">
+              <select id="categoryFilter" class="select" aria-label="Filter by category"></select>
+            </div>
+            <label class="checkbox-label">
+              <input id="lowStockFilter" type="checkbox" />
+              <span>Low stock only</span>
+            </label>
+          </div>
         </div>
 
         <div class="card-body">
@@ -110,10 +150,11 @@
                 <tr>
                   <th>ID</th>
                   <th>Name</th>
+                  <th>Category</th>
                   <th>Barcode</th>
                   <th>Price</th>
                   <th>Stock</th>
-                  <th data-role="admin">Actions</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody id="productsTable"></tbody>
@@ -155,22 +196,124 @@
           </div>
           <div>
             <div id="stockModalTitle" class="modal-title">Update Stock</div>
-            <div class="modal-subtitle">Enter the quantity you want to apply.</div>
+            <div id="stockModalSubtitle" class="modal-subtitle">Enter the quantity you want to apply.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeStockModalBtn" type="button" data-close-modal aria-label="Close stock modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal aria-label="Close stock modal">&times;</button>
       </div>
 
       <div class="modal-body">
-        <div class="field">
-          <label for="stockModalQuantity">Quantity</label>
-          <input id="stockModalQuantity" class="input" type="number" min="1" step="1" />
+        <div class="product-modal-grid">
+          <div class="field">
+            <label for="stockModalQuantity">Quantity</label>
+            <input id="stockModalQuantity" class="input" type="number" min="0" step="1" />
+          </div>
+
+          <div class="field" data-multi-warehouse hidden>
+            <label for="stockModalWarehouse">Warehouse</label>
+            <div class="select-shell">
+              <select id="stockModalWarehouse" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field" style="grid-column: 1 / -1;">
+            <label for="stockModalNote">Note <span class="field-hint">(supplier, document no, reason...)</span></label>
+            <input id="stockModalNote" class="input" type="text" maxlength="500" />
+          </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelStockModalBtn" type="button" data-close-modal>Cancel</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-primary" id="confirmStockModalBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="transferModalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-head-group">
+          <div class="icon-chip">
+            <i data-lucide="arrow-left-right"></i>
+          </div>
+          <div>
+            <div class="modal-title">Transfer Stock</div>
+            <div id="transferModalSubtitle" class="modal-subtitle">Move stock between warehouses.</div>
+          </div>
+        </div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Close transfer modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="product-modal-grid">
+          <div class="field">
+            <label for="transferFrom">From</label>
+            <div class="select-shell">
+              <select id="transferFrom" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="transferTo">To</label>
+            <div class="select-shell">
+              <select id="transferTo" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="transferQuantity">Quantity</label>
+            <input id="transferQuantity" class="input" type="number" min="0" step="1" />
+          </div>
+
+          <div class="field">
+            <label for="transferNote">Note</label>
+            <input id="transferNote" class="input" type="text" maxlength="500" />
+          </div>
+        </div>
+        <div id="transferLevels" class="stock-levels"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
+        <button class="btn btn-primary" id="confirmTransferBtn">Transfer</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="historyModalOverlay" class="modal-overlay">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <div class="modal-head-group">
+          <div class="icon-chip">
+            <i data-lucide="history"></i>
+          </div>
+          <div>
+            <div class="modal-title">Stock History</div>
+            <div id="historyModalSubtitle" class="modal-subtitle"></div>
+          </div>
+        </div>
+        <button class="modal-close" type="button" data-close-modal aria-label="Close history modal">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div id="historyLevels" class="stock-levels"></div>
+        <div class="table-wrap">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Warehouse</th>
+                <th>Change</th>
+                <th>Total After</th>
+                <th>User</th>
+                <th>Note</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -184,10 +327,10 @@
           </div>
           <div>
             <div class="modal-title">Edit Product</div>
-            <div class="modal-subtitle">Stock changes made here are logged as adjustments.</div>
+            <div class="modal-subtitle">Use Stock In / Stock Out to change quantities.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeEditModalBtn" type="button" data-close-modal aria-label="Close edit modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal aria-label="Close edit modal">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -198,24 +341,38 @@
           </div>
 
           <div class="field">
-            <label for="editBarcode">Barcode</label>
+            <label for="editBarcode">Barcode / SKU</label>
             <input id="editBarcode" class="input" type="text" />
           </div>
 
           <div class="field">
-            <label for="editPrice">Price</label>
-            <input id="editPrice" class="input" type="number" step="0.01" min="0.01" />
+            <label for="editCategory">Category</label>
+            <div class="select-shell">
+              <select id="editCategory" class="select"></select>
+            </div>
           </div>
 
           <div class="field">
-            <label for="editStock">Stock Quantity</label>
-            <input id="editStock" class="input" type="number" min="0" step="1" />
+            <label for="editUnit">Unit</label>
+            <div class="select-shell">
+              <select id="editUnit" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="editMinStock">Minimum Stock</label>
+            <input id="editMinStock" class="input" type="number" min="0" step="1" placeholder="Default" />
+          </div>
+
+          <div class="field">
+            <label for="editPrice">Price</label>
+            <input id="editPrice" class="input" type="number" step="0.01" min="0.01" placeholder="No price" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelEditModalBtn" type="button" data-close-modal>Cancel</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-primary" id="saveEditModalBtn">Save</button>
       </div>
     </div>
@@ -233,7 +390,7 @@
             <div class="modal-subtitle">The product will be hidden from active lists.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeDeleteModalBtn" type="button" data-close-modal aria-label="Close archive modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal aria-label="Close archive modal">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -241,7 +398,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelDeleteModalBtn" type="button" data-close-modal>Cancel</button>
+        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-danger" id="confirmDeleteModalBtn">Archive</button>
       </div>
     </div>

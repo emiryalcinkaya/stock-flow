@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockFlow Settings</title>
+  <link rel="stylesheet" href="assets/css/main.css" />
+  <link rel="stylesheet" href="assets/css/products.css" />
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="assets/images/logo.png" alt="StockFlow logo" class="brand-logo" />
+        <div>
+          <div class="brand-title">StockFlow</div>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <a class="nav-link" href="dashboard.html">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a class="nav-link" href="products.html">
+          <i data-lucide="package"></i>
+          <span>Products</span>
+        </a>
+
+        <a class="nav-link" href="sales.html">
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
+        </a>
+
+        <a class="nav-link" href="sales-history.html">
+          <i data-lucide="history"></i>
+          <span>Stock Out History</span>
+        </a>
+
+        <a class="nav-link active" href="settings.html" data-role="admin">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user" data-current-user hidden>
+          <div class="sidebar-user-name" data-user-name></div>
+          <div class="sidebar-user-role" data-user-role></div>
+        </div>
+        <button class="btn btn-secondary logout-btn" data-logout>
+          <i data-lucide="log-out"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Settings</h1>
+          <p class="page-subtitle">Categories and warehouses.</p>
+        </div>
+      </div>
+
+      <section class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3>Categories</h3>
+          </div>
+          <div class="card-body">
+            <form id="categoryForm" class="inline-form">
+              <input id="categoryName" class="input" type="text" maxlength="100" placeholder="New category name" required />
+              <button class="btn btn-primary icon-btn" type="submit">
+                <i data-lucide="plus"></i>
+                <span>Add</span>
+              </button>
+            </form>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Products</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="categoriesTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3>Warehouses</h3>
+          </div>
+          <div class="card-body">
+            <form id="warehouseForm" class="inline-form">
+              <input id="warehouseName" class="input" type="text" maxlength="100" placeholder="New warehouse name" required />
+              <button class="btn btn-primary icon-btn" type="submit">
+                <i data-lucide="plus"></i>
+                <span>Add</span>
+              </button>
+            </form>
+
+            <p class="metric-note settings-hint">
+              With a single warehouse, warehouse choices stay hidden everywhere.
+              Add a second one to track stock per location and transfer between them.
+            </p>
+
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Products</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="warehousesTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/settings.js"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import { apiFetch, readJson } from "./config.js";
 import { initProtectedPage, isAdmin } from "./auth.js";
+import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js";
 import {
   escapeHtml,
   formatCurrency,
@@ -17,14 +18,25 @@ const saleDetailPanel = document.getElementById("saleDetailPanel");
 const salesFilterForm = document.getElementById("salesFilterForm");
 const dateFromInput = document.getElementById("dateFrom");
 const dateToInput = document.getElementById("dateTo");
+const reasonFilter = document.getElementById("reasonFilter");
 
 let currentUser = null;
 let selectedSaleId = null;
+
+const reasonLabel = (reason) => STOCK_OUT_REASONS[reason] || reason;
+
+reasonFilter.innerHTML = [
+  `<option value="">All reasons</option>`,
+  ...Object.entries(STOCK_OUT_REASONS).map(
+    ([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`
+  )
+].join("");
 
 function buildSalesQuery() {
   const params = new URLSearchParams();
   if (dateFromInput.value) params.set("date_from", dateFromInput.value);
   if (dateToInput.value) params.set("date_to", dateToInput.value);
+  if (reasonFilter.value) params.set("reason", reasonFilter.value);
   const query = params.toString();
   return query ? `?${query}` : "";
 }
@@ -35,12 +47,12 @@ async function loadSalesHistory() {
     const sales = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sales, "Failed to load sales history"), "error");
+      showToast(getErrorMessage(sales, "Failed to load history"), "error");
       return;
     }
 
     if (!sales.length) {
-      renderEmptyRow(salesHistoryTable, 5, "No sales found.");
+      renderEmptyRow(salesHistoryTable, 6, "Nothing found.");
       return;
     }
 
@@ -49,6 +61,7 @@ async function loadSalesHistory() {
         (sale) => `
         <tr class="${sale.id === selectedSaleId ? "row-selected" : ""}">
           <td>#${escapeHtml(sale.id)}</td>
+          <td>${escapeHtml(reasonLabel(sale.reason))}</td>
           <td>${formatCurrency(sale.total_price)}</td>
           <td>${statusBadge(sale.status)}</td>
           <td>${escapeHtml(formatDate(sale.created_at))}</td>
@@ -76,7 +89,7 @@ function renderSaleDetail(sale) {
   saleDetailPanel.innerHTML = `
     <div class="sale-detail">
       <div>
-        <div class="metric-note">Sale ID</div>
+        <div class="metric-note">${escapeHtml(reasonLabel(sale.reason))}</div>
         <div class="stat-value sale-detail-id">#${escapeHtml(sale.id)}</div>
       </div>
 
@@ -86,7 +99,11 @@ function renderSaleDetail(sale) {
           <div>${escapeHtml(formatDate(sale.created_at))}</div>
         </div>
         <div>
-          <div class="metric-note">Cashier</div>
+          <div class="metric-note">Warehouse</div>
+          <div>${escapeHtml(sale.warehouse_name || "-")}</div>
+        </div>
+        <div>
+          <div class="metric-note">User</div>
           <div>${escapeHtml(sale.cashier_name || "-")}</div>
         </div>
         <div>
@@ -103,8 +120,17 @@ function renderSaleDetail(sale) {
         }
       </div>
 
+      ${
+        sale.note
+          ? `<div>
+              <div class="metric-note">Note</div>
+              <div>${escapeHtml(sale.note)}</div>
+            </div>`
+          : ""
+      }
+
       <div>
-        <div class="metric-note">Total</div>
+        <div class="metric-note">Total Value</div>
         <div class="sale-detail-total">${formatCurrency(sale.total_price)}</div>
       </div>
 
@@ -116,7 +142,7 @@ function renderSaleDetail(sale) {
               <tr>
                 <th>Product</th>
                 <th>Qty</th>
-                <th>Unit</th>
+                <th>Unit Price</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -126,7 +152,7 @@ function renderSaleDetail(sale) {
                   (item) => `
                   <tr>
                     <td>${escapeHtml(item.product_name)}</td>
-                    <td>${escapeHtml(item.quantity)}</td>
+                    <td>${escapeHtml(formatQuantity(item.quantity, item.unit))}</td>
                     <td>${formatCurrency(item.unit_price)}</td>
                     <td>${formatCurrency(item.total_price)}</td>
                   </tr>
@@ -143,7 +169,7 @@ function renderSaleDetail(sale) {
           ? `<div>
               <button class="btn btn-danger icon-btn" data-action="cancel" data-id="${sale.id}">
                 <i data-lucide="undo-2"></i>
-                <span>Cancel Sale &amp; Restock</span>
+                <span>Cancel &amp; Return to Stock</span>
               </button>
             </div>`
           : ""
@@ -160,7 +186,7 @@ async function viewSaleDetail(saleId) {
     const sale = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sale, "Failed to load sale detail"), "error");
+      showToast(getErrorMessage(sale, "Failed to load details"), "error");
       return;
     }
 
@@ -173,7 +199,7 @@ async function viewSaleDetail(saleId) {
 }
 
 async function cancelSale(saleId, button) {
-  if (!window.confirm(`Cancel sale #${saleId}? Its items will be returned to stock.`)) return;
+  if (!window.confirm(`Cancel stock out #${saleId}? Its items will be returned to stock.`)) return;
 
   setButtonLoading(button, true, "Cancelling...");
 
@@ -182,12 +208,12 @@ async function cancelSale(saleId, button) {
     const sale = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sale, "Failed to cancel sale"), "error");
+      showToast(getErrorMessage(sale, "Failed to cancel"), "error");
       setButtonLoading(button, false);
       return;
     }
 
-    showToast(`Sale #${sale.id} cancelled`, "success");
+    showToast(`Stock out #${sale.id} cancelled`, "success");
     renderSaleDetail(sale);
     loadSalesHistory();
   } catch (error) {

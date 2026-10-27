@@ -787,3 +787,102 @@ select {
 .row-selected td {
   background: rgba(0, 0, 0, 0.03);
 }
+
+/* ----- Inventory additions ----- */
+
+.field-hint {
+  font-weight: 400;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.card-header:has(.table-filters),
+.card-header:has(> .btn) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.table-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.table-filters .select-shell {
+  min-width: 180px;
+}
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stock-levels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 16px;
+}
+
+.stock-levels:empty {
+  display: none;
+}
+
+.modal-wide {
+  max-width: 900px;
+}
+
+.modal-wide .modal-body {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+.inline-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.inline-form .input {
+  flex: 1;
+}
+
+.settings-hint {
+  margin-bottom: 16px;
+}
+
+.stepper-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: inherit;
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.stepper-input::-webkit-outer-spin-button,
+.stepper-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.stepper-input:focus {
+  outline: none;
+}
+
+/* Let wide tables scroll inside their card instead of stretching the page. */
+.content,
+.grid > * {
+  min-width: 0;
+}

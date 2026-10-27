@@ -30,13 +30,18 @@
         </a>
 
         <a class="nav-link" href="sales.html">
-          <i data-lucide="shopping-cart"></i>
-          <span>Create Sale</span>
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
         </a>
 
         <a class="nav-link" href="sales-history.html">
           <i data-lucide="history"></i>
-          <span>Sales History</span>
+          <span>Stock Out History</span>
+        </a>
+
+        <a class="nav-link" href="settings.html" data-role="admin">
+          <i data-lucide="settings"></i>
+          <span>Settings</span>
         </a>
       </nav>
 
@@ -56,7 +61,7 @@
       <div class="topbar">
         <div>
           <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Overview of products, revenue, and recent sales.</p>
+          <p class="page-subtitle">Overview of products, stock levels and recent stock outs.</p>
         </div>
       </div>
 
@@ -66,7 +71,7 @@
             <img src="assets/images/logo.png" alt="StockFlow logo" class="hero-brand-logo" />
             <div class="hero-brand-copy">
               <h2 class="hero-brand-title">StockFlow</h2>
-              <p class="hero-brand-tagline">Track inventory, stock movement, and sales with a clear live overview.</p>
+              <p class="hero-brand-tagline">Track products, stock levels and movements across your warehouses.</p>
             </div>
           </div>
         </div>
@@ -78,8 +83,8 @@
           </a>
 
           <a class="btn btn-primary" href="sales.html">
-            <i data-lucide="shopping-cart"></i>
-            <span>Create Sale</span>
+            <i data-lucide="package-minus"></i>
+            <span>Stock Out</span>
           </a>
         </div>
       </section>
@@ -100,23 +105,46 @@
         </div>
 
         <div class="card stat-card">
-          <i class="kpi-icon" data-lucide="shopping-bag"></i>
-          <div class="stat-label">Total Sales</div>
-          <div class="stat-value" id="totalSales">-</div>
-          <div class="metric-note">Completed sales</div>
+          <i class="kpi-icon" data-lucide="boxes"></i>
+          <div class="stat-label">Stock Value</div>
+          <div class="stat-value" id="stockValue">-</div>
+          <div class="metric-note">Products with a price</div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="wallet"></i>
-          <div class="stat-label">Revenue</div>
+          <div class="stat-label">Sales Revenue</div>
           <div class="stat-value" id="totalRevenue">-</div>
-          <div class="metric-note">Excludes cancelled sales</div>
+          <div class="metric-note" id="salesNote">Completed sales</div>
         </div>
       </section>
 
       <section class="card section-spacing">
         <div class="card-header">
-          <h3>Recent Sales</h3>
+          <h3>Low Stock Products</h3>
+          <a class="btn btn-secondary" href="products.html?low_stock=1">View all</a>
+        </div>
+
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Product</th>
+                  <th>Category</th>
+                  <th>In Stock</th>
+                  <th>Minimum</th>
+                </tr>
+              </thead>
+              <tbody id="lowStockTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section-spacing">
+        <div class="card-header">
+          <h3>Recent Stock Outs</h3>
         </div>
 
         <div class="card-body recent-sales-list">
@@ -124,7 +152,8 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>Sale ID</th>
+                  <th>ID</th>
+                  <th>Reason</th>
                   <th>Total</th>
                   <th>Status</th>
                   <th>Date</th>

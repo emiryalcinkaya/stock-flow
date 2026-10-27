@@ -1,5 +1,6 @@
 import { apiFetch, readJson } from "./config.js";
 import { initProtectedPage } from "./auth.js";
+import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js";
 import {
   escapeHtml,
   formatCurrency,
@@ -13,14 +14,17 @@ import {
 const totalProductsEl = document.getElementById("totalProducts");
 const lowStockCountEl = document.getElementById("lowStockCount");
 const lowStockNoteEl = document.getElementById("lowStockNote");
-const totalSalesEl = document.getElementById("totalSales");
+const stockValueEl = document.getElementById("stockValue");
 const totalRevenueEl = document.getElementById("totalRevenue");
+const salesNoteEl = document.getElementById("salesNote");
+const lowStockTable = document.getElementById("lowStockTable");
 const recentSalesTable = document.getElementById("recentSalesTable");
 
 async function loadDashboard() {
   try {
-    const [summaryRes, salesRes] = await Promise.all([
+    const [summaryRes, lowStockRes, salesRes] = await Promise.all([
       apiFetch("/dashboard/summary"),
+      apiFetch("/products/?low_stock=true&limit=10"),
       apiFetch("/sales/?limit=5")
     ]);
 
@@ -32,13 +36,17 @@ async function loadDashboard() {
 
     totalProductsEl.textContent = summary.total_products;
     lowStockCountEl.textContent = summary.low_stock;
-    lowStockNoteEl.textContent = `Products with stock under ${summary.low_stock_threshold}`;
-    totalSalesEl.textContent = summary.total_sales;
+    lowStockNoteEl.textContent = `Below their minimum (default ${summary.low_stock_threshold})`;
+    stockValueEl.textContent = formatCurrency(summary.stock_value);
     totalRevenueEl.textContent = formatCurrency(summary.revenue);
+    salesNoteEl.textContent = `${summary.total_sales} completed sales`;
+
+    const lowStock = await readJson(lowStockRes);
+    if (lowStockRes.ok) renderLowStock(lowStock);
 
     const sales = await readJson(salesRes);
     if (!salesRes.ok) {
-      showToast(getErrorMessage(sales, "Failed to load sales"), "error");
+      showToast(getErrorMessage(sales, "Failed to load stock outs"), "error");
       return;
     }
 
@@ -49,9 +57,29 @@ async function loadDashboard() {
   }
 }
 
+function renderLowStock(products) {
+  if (!products.length) {
+    renderEmptyRow(lowStockTable, 4, "All products are above their minimum stock.");
+    return;
+  }
+
+  lowStockTable.innerHTML = products
+    .map(
+      (product) => `
+        <tr>
+          <td><strong>${escapeHtml(product.name)}</strong></td>
+          <td>${escapeHtml(product.category_name || "-")}</td>
+          <td class="stock-low">${escapeHtml(formatQuantity(product.stock_quantity, product.unit))}</td>
+          <td>${product.min_stock === null ? "Default" : escapeHtml(formatQuantity(product.min_stock, product.unit))}</td>
+        </tr>
+      `
+    )
+    .join("");
+}
+
 function renderRecentSales(sales) {
   if (!sales.length) {
-    renderEmptyRow(recentSalesTable, 4, "No sales found yet.");
+    renderEmptyRow(recentSalesTable, 5, "No stock outs yet.");
     return;
   }
 
@@ -60,6 +88,7 @@ function renderRecentSales(sales) {
       (sale) => `
         <tr>
           <td>#${escapeHtml(sale.id)}</td>
+          <td>${escapeHtml(STOCK_OUT_REASONS[sale.reason] || sale.reason)}</td>
           <td>${formatCurrency(sale.total_price)}</td>
           <td>${statusBadge(sale.status)}</td>
           <td>${escapeHtml(formatDate(sale.created_at))}</td>
