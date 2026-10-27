@@ -1,31 +1,41 @@
-from fastapi import FastAPI
+import logging
+
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import text
+from fastapi.responses import JSONResponse
 
 from app.api.v1.router import api_router
-from app.db.session import engine
 from app.core.config import settings
 
-app = FastAPI(title=settings.app_name)
+logging.basicConfig(
+    level=settings.log_level.upper(),
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
+logger = logging.getLogger("stockflow")
+
+app = FastAPI(
+    title=settings.app_name,
+    version="1.0.0",
+    description="Inventory and sales management API.",
+)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=settings.cors_origins,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 app.include_router(api_router, prefix="/api/v1")
 
 
-@app.get("/")
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+@app.get("/", include_in_schema=False)
 def root():
-    return {"message": "StockFlow API running"}
-
-
-@app.get("/db-check")
-def db_check():
-    with engine.connect() as connection:
-        result = connection.execute(text("SELECT 1"))
-        return {"database": "connected", "result": result.scalar()}
+    return {"message": "StockFlow API running", "docs": "/docs"}
