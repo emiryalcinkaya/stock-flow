@@ -1,5 +1,5 @@
 [project]
-name = "stockflow"
+name = "eysto"
 version = "1.0.0"
 description = "Inventory and sales management system built with FastAPI and PostgreSQL."
 requires-python = ">=3.11"

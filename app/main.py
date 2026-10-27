@@ -11,7 +11,7 @@ logging.basicConfig(
     level=settings.log_level.upper(),
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
-logger = logging.getLogger("stockflow")
+logger = logging.getLogger("eysto")
 
 app = FastAPI(
     title=settings.app_name,
@@ -38,4 +38,4 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
 
 @app.get("/", include_in_schema=False)
 def root():
-    return {"message": "StockFlow API running", "docs": "/docs"}
+    return {"message": "Eysto API running", "docs": "/docs"}

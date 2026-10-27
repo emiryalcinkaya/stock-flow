@@ -1,17 +1,17 @@
-# StockFlow
+# Eysto
 
 [![CI](https://github.com/emiryalcinkaya/stock-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/emiryalcinkaya/stock-flow/actions/workflows/ci.yml)
 ![Python](https://img.shields.io/badge/python-3.11-blue)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.136-009688)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791)
 
-StockFlow is a full-stack inventory and sales management system. It simulates how real-world stock and sales operations should behave: consistent, auditable and safe under concurrent use.
+Eysto is a full-stack inventory and sales management system. It simulates how real-world stock and sales operations should behave: consistent, auditable and safe under concurrent use.
 
 Instead of a plain CRUD app, the project focuses on **how data should behave in a real system**.
 
 ## Features
 
-StockFlow is a general-purpose stock tracking system: it fits a hardware store, a food warehouse or an online shop alike. Features that only some businesses need stay out of the way until they are used.
+Eysto is a general-purpose stock tracking system: it fits a hardware store, a food warehouse or an online shop alike. Features that only some businesses need stay out of the way until they are used.
 
 - **Products** – create, edit, search, archive and restore products with unique barcodes / SKUs
 - **Categories** – group products and filter by category
@@ -47,7 +47,7 @@ StockFlow is a general-purpose stock tracking system: it fits a hardware store, 
 ## Project structure
 
 ```
-stockflow/
+eysto/
 ├── app/
 │   ├── api/
 │   │   ├── deps.py              # auth & role dependencies
@@ -134,7 +134,7 @@ All settings are read from environment variables or `.env` (see [`.env.example`]
 | `low_stock_threshold` | `5` | Default minimum stock for products without their own |
 | `login_max_attempts` / `login_lockout_seconds` | `5` / `300` | Failed-login rate limit |
 
-The frontend calls `http://127.0.0.1:8000/api/v1` by default. To change it, define `window.STOCKFLOW_API_URL` before the page scripts load.
+The frontend calls `http://127.0.0.1:8000/api/v1` by default. To change it, define `window.EYSTO_API_URL` before the page scripts load.
 
 ## API overview
 

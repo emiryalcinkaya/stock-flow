@@ -1,5 +1,5 @@
-// Override by defining window.STOCKFLOW_API_URL before the scripts load.
-export const API_BASE_URL = window.STOCKFLOW_API_URL || "http://127.0.0.1:8000/api/v1";
+// Override by defining window.EYSTO_API_URL before the scripts load.
+export const API_BASE_URL = window.EYSTO_API_URL || "http://127.0.0.1:8000/api/v1";
 
 const TOKEN_KEY = "token";
 const USER_KEY = "currentUser";

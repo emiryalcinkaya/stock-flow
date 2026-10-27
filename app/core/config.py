@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = Field(default="StockFlow", alias="app_name")
+    app_name: str = Field(default="Eysto", alias="app_name")
     database_url: str = Field(alias="database_url")
     secret_key: str = Field(alias="secret_key", min_length=16)
     algorithm: str = Field(default="HS256", alias="algorithm")

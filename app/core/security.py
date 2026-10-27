@@ -10,7 +10,7 @@ ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 
 # Used to keep login timing similar whether or not the username exists.
-DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"stockflow-dummy-password", bcrypt.gensalt()).decode()
+DUMMY_PASSWORD_HASH = bcrypt.hashpw(b"eysto-dummy-password", bcrypt.gensalt()).decode()
 
 
 def hash_password(password: str) -> str:
