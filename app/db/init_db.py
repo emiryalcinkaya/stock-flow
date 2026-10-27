@@ -1,15 +1,20 @@
-from app.db.base import Base
-from app.db.session import engine
+"""Create or upgrade the database schema using Alembic migrations.
 
-from app.db.models.role import Role
-from app.db.models.user import User
-from app.db.models.product import Product
-from app.db.models.sale import Sale
-from app.db.models.sale_item import SaleItem
+Usage: python -m app.db.init_db   (same as: alembic upgrade head)
+"""
+
+from pathlib import Path
+
+from alembic import command
+from alembic.config import Config
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
-def init_db():
-    Base.metadata.create_all(bind=engine)
+def init_db() -> None:
+    config = Config(str(PROJECT_ROOT / "alembic.ini"))
+    config.set_main_option("script_location", str(PROJECT_ROOT / "alembic"))
+    command.upgrade(config, "head")
 
 
 if __name__ == "__main__":
