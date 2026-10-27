@@ -1,41 +1,49 @@
-from app.db.session import SessionLocal
+import os
+
+from sqlalchemy.orm import Session
+
+from app.core.security import hash_password
 from app.db.models.role import Role
 from app.db.models.user import User
-from app.core.security import hash_password
+from app.db.session import SessionLocal
 
 
-def seed_admin():
-    db = SessionLocal()
+def seed_user(db: Session, *, role_name: str, username: str, password: str, full_name: str, email: str) -> None:
+    role = db.query(Role).filter(Role.name == role_name).first()
 
-    admin_role = db.query(Role).filter(Role.name == "admin").first()
-
-    if not admin_role:
-        print("Admin role not found.")
-        db.close()
+    if not role:
+        print(f"Role '{role_name}' not found. Run seed_roles first.")
         return
 
-    existing_admin = db.query(User).filter(User.username == "admin").first()
-
-    if existing_admin:
-        print("Admin user already exists.")
-        db.close()
+    if db.query(User).filter(User.username == username).first():
+        print(f"User '{username}' already exists.")
         return
 
-    admin_user = User(
-        full_name="System Admin",
-        email="admin@stockflow.com",
-        username="admin",
-        hashed_password=hash_password("admin123"),
-        is_active=True,
-        role_id=admin_role.id
+    db.add(
+        User(
+            full_name=full_name,
+            email=email,
+            username=username,
+            hashed_password=hash_password(password),
+            is_active=True,
+            role_id=role.id,
+        )
     )
-
-    db.add(admin_user)
     db.commit()
-    db.close()
+    print(f"User '{username}' created.")
 
-    print("Admin user created successfully.")
+
+def seed_admin(db: Session) -> None:
+    seed_user(
+        db,
+        role_name="admin",
+        username=os.getenv("SEED_ADMIN_USERNAME", "admin"),
+        password=os.getenv("SEED_ADMIN_PASSWORD", "admin123"),
+        full_name="System Admin",
+        email="admin@stockflow.local",
+    )
 
 
 if __name__ == "__main__":
-    seed_admin()
+    with SessionLocal() as session:
+        seed_admin(session)
