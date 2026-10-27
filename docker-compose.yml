@@ -2,15 +2,47 @@ services:
   db:
     image: postgres:16
     container_name: stockflow_db
-    restart: always
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: stockflow_user
-      POSTGRES_PASSWORD: stockflow_password
-      POSTGRES_DB: stockflow_db
+      POSTGRES_USER: ${POSTGRES_USER:-stockflow_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-stockflow_password}
+      POSTGRES_DB: ${POSTGRES_DB:-stockflow_db}
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    container_name: stockflow_api
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      database_url: postgresql+psycopg2://${POSTGRES_USER:-stockflow_user}:${POSTGRES_PASSWORD:-stockflow_password}@db:5432/${POSTGRES_DB:-stockflow_db}
+      secret_key: ${secret_key:?Set secret_key in .env (see .env.example)}
+      cors_origins: http://localhost:8080,http://127.0.0.1:8080
+    ports:
+      - "8000:8000"
+    profiles: ["full"]
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: stockflow_frontend
+    restart: unless-stopped
+    depends_on:
+      - api
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    ports:
+      - "8080:80"
+    profiles: ["full"]
 
 volumes:
   postgres_data:
