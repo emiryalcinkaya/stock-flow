@@ -6,7 +6,7 @@
   <title>StockFlow Sales History</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/sales.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -42,6 +42,10 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div class="sidebar-user" data-current-user hidden>
+          <div class="sidebar-user-name" data-user-name></div>
+          <div class="sidebar-user-role" data-user-role></div>
+        </div>
         <button class="btn btn-secondary logout-btn" data-logout>
           <i data-lucide="log-out"></i>
           <span>Logout</span>
@@ -63,12 +67,28 @@
             <h3>All Sales</h3>
           </div>
           <div class="card-body">
+            <form id="salesFilterForm" class="sales-filter">
+              <div class="field">
+                <label for="dateFrom">From</label>
+                <input id="dateFrom" class="input" type="date" />
+              </div>
+              <div class="field">
+                <label for="dateTo">To</label>
+                <input id="dateTo" class="input" type="date" />
+              </div>
+              <div class="sales-filter-actions">
+                <button class="btn btn-primary" type="submit">Filter</button>
+                <button class="btn btn-secondary" type="reset">Clear</button>
+              </div>
+            </form>
+
             <div class="table-wrap">
               <table class="table">
                 <thead>
                   <tr>
                     <th>ID</th>
                     <th>Total</th>
+                    <th>Status</th>
                     <th>Date</th>
                     <th>Action</th>
                   </tr>

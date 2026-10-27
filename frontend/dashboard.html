@@ -6,7 +6,7 @@
   <title>StockFlow Dashboard</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/dashboard.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -42,6 +42,10 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div class="sidebar-user" data-current-user hidden>
+          <div class="sidebar-user-name" data-user-name></div>
+          <div class="sidebar-user-role" data-user-role></div>
+        </div>
         <button class="btn btn-secondary logout-btn" data-logout>
           <i data-lucide="log-out"></i>
           <span>Logout</span>
@@ -71,7 +75,7 @@
         <div class="action-inline">
           <a class="btn btn-primary" href="products.html">
             <i data-lucide="package"></i>
-            <span>Manage Products</span>
+            <span>Products</span>
           </a>
 
           <a class="btn btn-primary" href="sales.html">
@@ -93,21 +97,21 @@
           <i class="kpi-icon" data-lucide="shield-alert"></i>
           <div class="stat-label">Low Stock</div>
           <div class="stat-value" id="lowStockCount">-</div>
-          <div class="metric-note">Products with stock under 5</div>
+          <div class="metric-note" id="lowStockNote">Products with low stock</div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="shopping-bag"></i>
           <div class="stat-label">Total Sales</div>
           <div class="stat-value" id="totalSales">-</div>
-          <div class="metric-note">All recorded sales</div>
+          <div class="metric-note">Completed sales</div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="wallet"></i>
           <div class="stat-label">Revenue</div>
           <div class="stat-value" id="totalRevenue">-</div>
-          <div class="metric-note">Calculated from sales history</div>
+          <div class="metric-note">Excludes cancelled sales</div>
         </div>
       </section>
 
@@ -123,6 +127,7 @@
                 <tr>
                   <th>Sale ID</th>
                   <th>Total</th>
+                  <th>Status</th>
                   <th>Date</th>
                 </tr>
               </thead>

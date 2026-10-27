@@ -6,7 +6,7 @@
   <title>StockFlow Login</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/auth.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <main class="auth-page">
@@ -28,12 +28,12 @@
       <form id="loginForm" class="auth-form">
         <div class="field">
           <label for="username">Username</label>
-          <input class="input" type="text" id="username" placeholder="Enter username" required />
+          <input class="input" type="text" id="username" placeholder="Enter username" autocomplete="username" required />
         </div>
 
         <div class="field">
           <label for="password">Password</label>
-          <input class="input" type="password" id="password" placeholder="Enter password" required />
+          <input class="input" type="password" id="password" placeholder="Enter password" autocomplete="current-password" required />
         </div>
 
         <button id="loginButton" class="btn btn-primary" type="submit">
@@ -44,7 +44,7 @@
       </form>
 
       <div class="auth-footer">
-        Demo credentials: <strong>admin / admin123</strong>
+        Demo accounts: <strong>admin / admin123</strong> · <strong>cashier / cashier123</strong>
       </div>
     </section>
   </main>

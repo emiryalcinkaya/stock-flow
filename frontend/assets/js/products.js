@@ -1,24 +1,24 @@
-import { apiFetch } from "./config.js";
-import { requireAuth, initSidebarLogout } from "./auth.js";
+import { apiFetch, readJson } from "./config.js";
+import { initProtectedPage, isAdmin } from "./auth.js";
 import {
+  escapeHtml,
   formatCurrency,
-  renderEmptyState,
+  getErrorMessage,
+  refreshIcons,
+  renderEmptyRow,
   setButtonLoading,
   showToast
 } from "./ui.js";
 
-requireAuth();
-initSidebarLogout();
-
 const productsTable = document.getElementById("productsTable");
+const archivedProductsTable = document.getElementById("archivedProductsTable");
 const productForm = document.getElementById("productForm");
 const addProductButton = document.getElementById("addProductButton");
+const productSearch = document.getElementById("productSearch");
 
 const stockModalOverlay = document.getElementById("stockModalOverlay");
 const stockModalTitle = document.getElementById("stockModalTitle");
 const stockModalQuantity = document.getElementById("stockModalQuantity");
-const closeStockModalBtn = document.getElementById("closeStockModalBtn");
-const cancelStockModalBtn = document.getElementById("cancelStockModalBtn");
 const confirmStockModalBtn = document.getElementById("confirmStockModalBtn");
 
 const editModalOverlay = document.getElementById("editModalOverlay");
@@ -26,102 +26,163 @@ const editName = document.getElementById("editName");
 const editBarcode = document.getElementById("editBarcode");
 const editPrice = document.getElementById("editPrice");
 const editStock = document.getElementById("editStock");
-const closeEditModalBtn = document.getElementById("closeEditModalBtn");
-const cancelEditModalBtn = document.getElementById("cancelEditModalBtn");
 const saveEditModalBtn = document.getElementById("saveEditModalBtn");
 
 const deleteModalOverlay = document.getElementById("deleteModalOverlay");
-const closeDeleteModalBtn = document.getElementById("closeDeleteModalBtn");
-const cancelDeleteModalBtn = document.getElementById("cancelDeleteModalBtn");
 const confirmDeleteModalBtn = document.getElementById("confirmDeleteModalBtn");
 const deleteModalText = document.getElementById("deleteModalText");
 
+let currentUser = null;
+let products = [];
+let lowStockThreshold = 5;
 let currentStockProductId = null;
 let currentStockAction = null;
 let currentEditProductId = null;
 let currentDeleteProductId = null;
 
+function findProduct(id) {
+  return products.find((product) => product.id === id);
+}
+
+async function loadLowStockThreshold() {
+  const response = await apiFetch("/dashboard/summary");
+  if (response.ok) {
+    const summary = await readJson(response);
+    lowStockThreshold = summary.low_stock_threshold;
+  }
+}
+
 async function loadProducts() {
   try {
-    const response = await apiFetch("/products/");
-    const products = await response.json();
+    const search = productSearch.value.trim();
+    const query = search ? `?search=${encodeURIComponent(search)}` : "";
+    const response = await apiFetch(`/products/${query}`);
+    const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(products.detail || "Failed to load products", "error");
+      showToast(getErrorMessage(data, "Failed to load products"), "error");
       return;
     }
 
-    if (!products.length) {
-      productsTable.innerHTML = "";
-      renderEmptyState(productsTable.closest(".card-body"), "No active products found.");
-      return;
-    }
-
-    const oldEmptyState = productsTable.closest(".card-body").querySelector(".empty-state");
-    if (oldEmptyState) oldEmptyState.remove();
-
-    productsTable.innerHTML = products
-      .map(
-        (product) => `
-          <tr>
-            <td>${product.id}</td>
-            <td><strong>${product.name}</strong></td>
-            <td>${product.barcode}</td>
-            <td>${formatCurrency(product.price)}</td>
-            <td class="${Number(product.stock_quantity) < 5 ? "stock-low" : "stock-good"}">
-              ${product.stock_quantity}
-            </td>
-            <td>
-              <div class="row-actions">
-                <button
-                  class="btn btn-secondary icon-btn"
-                  onclick="openEditModal(${product.id}, '${escapeQuotes(product.name)}', '${escapeQuotes(product.barcode)}', ${Number(product.price)}, ${Number(product.stock_quantity)})"
-                >
-                  <i data-lucide="square-pen"></i>
-                  <span>Edit</span>
-                </button>
-
-                <button
-                  class="btn btn-secondary icon-btn"
-                  onclick="openStockModal(${product.id}, 'increase')"
-                >
-                  <i data-lucide="package-plus"></i>
-                  <span>Stock In</span>
-                </button>
-
-                <button
-                  class="btn btn-secondary icon-btn"
-                  onclick="openStockModal(${product.id}, 'decrease')"
-                >
-                  <i data-lucide="package-minus"></i>
-                  <span>Stock Out</span>
-                </button>
-
-                <button
-                  class="btn btn-danger icon-btn"
-                  onclick="openDeleteModal(${product.id}, '${escapeQuotes(product.name)}')"
-                >
-                  <i data-lucide="archive"></i>
-                  <span>Archive</span>
-                </button>
-              </div>
-            </td>
-          </tr>
-        `
-      )
-      .join("");
-
-    if (window.lucide) {
-      lucide.createIcons();
-    }
+    products = data;
+    renderProducts();
   } catch (error) {
     console.error(error);
     showToast("Request failed", "error");
   }
 }
 
-function escapeQuotes(value) {
-  return String(value).replace(/'/g, "\\'");
+function renderProducts() {
+  const admin = isAdmin(currentUser);
+  const columnCount = admin ? 6 : 5;
+
+  if (!products.length) {
+    renderEmptyRow(productsTable, columnCount, "No active products found.");
+    return;
+  }
+
+  productsTable.innerHTML = products
+    .map(
+      (product) => `
+        <tr>
+          <td>${escapeHtml(product.id)}</td>
+          <td><strong>${escapeHtml(product.name)}</strong></td>
+          <td>${escapeHtml(product.barcode)}</td>
+          <td>${formatCurrency(product.price)}</td>
+          <td class="${product.stock_quantity < lowStockThreshold ? "stock-low" : "stock-good"}">
+            ${escapeHtml(product.stock_quantity)}
+          </td>
+          ${admin ? renderProductActions(product.id) : ""}
+        </tr>
+      `
+    )
+    .join("");
+
+  refreshIcons();
+}
+
+function renderProductActions(productId) {
+  return `
+    <td>
+      <div class="row-actions">
+        <button class="btn btn-secondary icon-btn" data-action="edit" data-id="${productId}">
+          <i data-lucide="square-pen"></i>
+          <span>Edit</span>
+        </button>
+        <button class="btn btn-secondary icon-btn" data-action="increase" data-id="${productId}">
+          <i data-lucide="package-plus"></i>
+          <span>Stock In</span>
+        </button>
+        <button class="btn btn-secondary icon-btn" data-action="decrease" data-id="${productId}">
+          <i data-lucide="package-minus"></i>
+          <span>Stock Out</span>
+        </button>
+        <button class="btn btn-danger icon-btn" data-action="archive" data-id="${productId}">
+          <i data-lucide="archive"></i>
+          <span>Archive</span>
+        </button>
+      </div>
+    </td>
+  `;
+}
+
+async function loadArchivedProducts() {
+  try {
+    const response = await apiFetch("/products/?status=archived");
+    const archived = await readJson(response);
+
+    if (!response.ok) {
+      showToast(getErrorMessage(archived, "Failed to load archived products"), "error");
+      return;
+    }
+
+    if (!archived.length) {
+      renderEmptyRow(archivedProductsTable, 4, "No archived products.");
+      return;
+    }
+
+    archivedProductsTable.innerHTML = archived
+      .map(
+        (product) => `
+          <tr>
+            <td>${escapeHtml(product.id)}</td>
+            <td><strong>${escapeHtml(product.name)}</strong></td>
+            <td>${escapeHtml(product.barcode)}</td>
+            <td>
+              <button class="btn btn-secondary icon-btn" data-action="restore" data-id="${product.id}">
+                <i data-lucide="archive-restore"></i>
+                <span>Restore</span>
+              </button>
+            </td>
+          </tr>
+        `
+      )
+      .join("");
+
+    refreshIcons();
+  } catch (error) {
+    console.error(error);
+    showToast("Request failed", "error");
+  }
+}
+
+function reloadAll() {
+  loadProducts();
+  if (isAdmin(currentUser)) loadArchivedProducts();
+}
+
+async function submitJson(endpoint, method, body, fallbackError) {
+  const response = await apiFetch(endpoint, {
+    method,
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+  const data = await readJson(response);
+
+  if (!response.ok) {
+    showToast(getErrorMessage(data, fallbackError), "error");
+    return null;
+  }
+  return data;
 }
 
 productForm.addEventListener("submit", async (e) => {
@@ -137,17 +198,8 @@ productForm.addEventListener("submit", async (e) => {
   setButtonLoading(addProductButton, true, "Adding...");
 
   try {
-    const response = await apiFetch("/products/", {
-      method: "POST",
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      showToast(data.detail || "Failed to add product", "error");
-      return;
-    }
+    const created = await submitJson("/products/", "POST", payload, "Failed to add product");
+    if (!created) return;
 
     showToast("Product added", "success");
     productForm.reset();
@@ -160,69 +212,111 @@ productForm.addEventListener("submit", async (e) => {
   }
 });
 
-window.openStockModal = function (productId, action) {
+let searchTimer = null;
+productSearch.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(loadProducts, 250);
+});
+
+// ----- Modals -----
+
+function openModal(overlay) {
+  overlay.classList.add("show");
+  const firstInput = overlay.querySelector("input");
+  if (firstInput) firstInput.focus();
+}
+
+function closeModal(overlay) {
+  overlay.classList.remove("show");
+}
+
+function openStockModal(productId, action) {
   currentStockProductId = productId;
   currentStockAction = action;
   stockModalQuantity.value = "";
-  stockModalTitle.textContent =
-    action === "increase" ? "Increase Stock" : "Decrease Stock";
-  stockModalOverlay.classList.add("show");
-};
-
-function closeStockModal() {
-  stockModalOverlay.classList.remove("show");
-  currentStockProductId = null;
-  currentStockAction = null;
+  stockModalTitle.textContent = action === "increase" ? "Increase Stock" : "Decrease Stock";
+  openModal(stockModalOverlay);
 }
 
-confirmStockModalBtn.addEventListener("click", async () => {
-  const quantity = Number(stockModalQuantity.value);
+function openEditModal(productId) {
+  const product = findProduct(productId);
+  if (!product) return;
 
-  if (!quantity || quantity <= 0) {
-    showToast("Enter a valid quantity", "error");
-    return;
-  }
+  currentEditProductId = productId;
+  editName.value = product.name;
+  editBarcode.value = product.barcode;
+  editPrice.value = product.price;
+  editStock.value = product.stock_quantity;
+  openModal(editModalOverlay);
+}
 
-  const endpoint =
-    currentStockAction === "increase"
-      ? `/products/${currentStockProductId}/increase-stock`
-      : `/products/${currentStockProductId}/decrease-stock`;
+function openDeleteModal(productId) {
+  const product = findProduct(productId);
+  if (!product) return;
 
+  currentDeleteProductId = productId;
+  deleteModalText.textContent = `Are you sure you want to archive "${product.name}"?`;
+  openModal(deleteModalOverlay);
+}
+
+async function restoreProduct(productId) {
   try {
-    const response = await apiFetch(endpoint, {
-      method: "POST",
-      body: JSON.stringify({ quantity })
-    });
+    const restored = await submitJson(`/products/${productId}/restore`, "POST", undefined, "Restore failed");
+    if (!restored) return;
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      showToast(data.detail || "Stock update failed", "error");
-      return;
-    }
-
-    showToast("Stock updated", "success");
-    closeStockModal();
-    loadProducts();
+    showToast("Product restored", "success");
+    reloadAll();
   } catch (error) {
     console.error(error);
     showToast("Request failed", "error");
   }
-});
+}
 
-window.openEditModal = function (id, name, barcode, price, stock) {
-  currentEditProductId = id;
-  editName.value = name;
-  editBarcode.value = barcode;
-  editPrice.value = price;
-  editStock.value = stock;
-  editModalOverlay.classList.add("show");
+const rowActions = {
+  edit: openEditModal,
+  increase: (id) => openStockModal(id, "increase"),
+  decrease: (id) => openStockModal(id, "decrease"),
+  archive: openDeleteModal,
+  restore: restoreProduct
 };
 
-function closeEditModal() {
-  editModalOverlay.classList.remove("show");
-  currentEditProductId = null;
-}
+document.addEventListener("click", (e) => {
+  const button = e.target.closest("[data-action]");
+  if (!button) return;
+
+  const handler = rowActions[button.dataset.action];
+  if (handler) handler(Number(button.dataset.id));
+});
+
+confirmStockModalBtn.addEventListener("click", async () => {
+  const quantity = Number(stockModalQuantity.value);
+
+  if (!Number.isInteger(quantity) || quantity <= 0) {
+    showToast("Enter a valid quantity", "error");
+    return;
+  }
+
+  setButtonLoading(confirmStockModalBtn, true, "Saving...");
+
+  try {
+    const updated = await submitJson(
+      `/products/${currentStockProductId}/${currentStockAction}-stock`,
+      "POST",
+      { quantity },
+      "Stock update failed"
+    );
+    if (!updated) return;
+
+    showToast("Stock updated", "success");
+    closeModal(stockModalOverlay);
+    loadProducts();
+  } catch (error) {
+    console.error(error);
+    showToast("Request failed", "error");
+  } finally {
+    setButtonLoading(confirmStockModalBtn, false);
+  }
+});
 
 saveEditModalBtn.addEventListener("click", async () => {
   const payload = {
@@ -232,80 +326,58 @@ saveEditModalBtn.addEventListener("click", async () => {
     stock_quantity: Number(editStock.value)
   };
 
+  setButtonLoading(saveEditModalBtn, true, "Saving...");
+
   try {
-    const response = await apiFetch(`/products/${currentEditProductId}`, {
-      method: "PATCH",
-      body: JSON.stringify(payload)
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      showToast(data.detail || "Update failed", "error");
-      return;
-    }
+    const updated = await submitJson(`/products/${currentEditProductId}`, "PATCH", payload, "Update failed");
+    if (!updated) return;
 
     showToast("Product updated", "success");
-    closeEditModal();
+    closeModal(editModalOverlay);
     loadProducts();
   } catch (error) {
     console.error(error);
     showToast("Request failed", "error");
+  } finally {
+    setButtonLoading(saveEditModalBtn, false);
   }
 });
-
-window.openDeleteModal = function (id, name) {
-  currentDeleteProductId = id;
-  deleteModalText.textContent = `Are you sure you want to archive "${name}"?`;
-  deleteModalOverlay.classList.add("show");
-};
-
-function closeDeleteModal() {
-  deleteModalOverlay.classList.remove("show");
-  currentDeleteProductId = null;
-}
 
 confirmDeleteModalBtn.addEventListener("click", async () => {
+  setButtonLoading(confirmDeleteModalBtn, true, "Archiving...");
+
   try {
-    const response = await apiFetch(`/products/${currentDeleteProductId}`, {
-      method: "DELETE"
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      showToast(data.detail || "Archive failed", "error");
-      return;
-    }
+    const result = await submitJson(`/products/${currentDeleteProductId}`, "DELETE", undefined, "Archive failed");
+    if (!result) return;
 
     showToast("Product archived", "success");
-    closeDeleteModal();
-    loadProducts();
+    closeModal(deleteModalOverlay);
+    reloadAll();
   } catch (error) {
     console.error(error);
     showToast("Request failed", "error");
+  } finally {
+    setButtonLoading(confirmDeleteModalBtn, false);
   }
 });
 
-closeStockModalBtn.addEventListener("click", closeStockModal);
-cancelStockModalBtn.addEventListener("click", closeStockModal);
-
-closeEditModalBtn.addEventListener("click", closeEditModal);
-cancelEditModalBtn.addEventListener("click", closeEditModal);
-
-closeDeleteModalBtn.addEventListener("click", closeDeleteModal);
-cancelDeleteModalBtn.addEventListener("click", closeDeleteModal);
-
-stockModalOverlay.addEventListener("click", (e) => {
-  if (e.target === stockModalOverlay) closeStockModal();
+[stockModalOverlay, editModalOverlay, deleteModalOverlay].forEach((overlay) => {
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay || e.target.closest("[data-close-modal]")) {
+      closeModal(overlay);
+    }
+  });
 });
 
-editModalOverlay.addEventListener("click", (e) => {
-  if (e.target === editModalOverlay) closeEditModal();
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    document.querySelectorAll(".modal-overlay.show").forEach(closeModal);
+  }
 });
 
-deleteModalOverlay.addEventListener("click", (e) => {
-  if (e.target === deleteModalOverlay) closeDeleteModal();
-});
+currentUser = await initProtectedPage();
 
-loadProducts();
+if (currentUser) {
+  await loadLowStockThreshold();
+  reloadAll();
+}

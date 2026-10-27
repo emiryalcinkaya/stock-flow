@@ -145,3 +145,47 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ----- Sales history ----- */
+
+.sales-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sales-filter .field {
+  flex: 1 1 140px;
+}
+
+.sales-filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.sale-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.sale-detail-id {
+  font-size: 28px;
+}
+
+.sale-detail-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 14px;
+}
+
+.sale-detail-total {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.sale-detail-items-label {
+  margin-bottom: 10px;
+}

@@ -6,7 +6,7 @@
   <title>StockFlow Create Sale</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/sales.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -42,6 +42,10 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div class="sidebar-user" data-current-user hidden>
+          <div class="sidebar-user-name" data-user-name></div>
+          <div class="sidebar-user-role" data-user-role></div>
+        </div>
         <button class="btn btn-secondary logout-btn" data-logout>
           <i data-lucide="log-out"></i>
           <span>Logout</span>
@@ -120,7 +124,7 @@
               <div class="sales-meta">Total sale amount</div>
               <div id="cartTotal" class="sales-total">$0.00</div>
               <div>
-                <button id="submitSaleButton" class="btn btn-primary icon-btn">
+                <button id="submitSaleButton" class="btn btn-primary icon-btn" type="button">
                   <i data-lucide="shopping-bag"></i>
                   <span>Create Sale</span>
                 </button>

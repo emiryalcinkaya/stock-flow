@@ -1,18 +1,19 @@
-import { apiFetch } from "./config.js";
-import { requireAuth, initSidebarLogout } from "./auth.js";
+import { apiFetch, readJson } from "./config.js";
+import { initProtectedPage } from "./auth.js";
 import {
+  escapeHtml,
   formatCurrency,
+  getErrorMessage,
+  refreshIcons,
   renderEmptyState,
   setButtonLoading,
   showToast
 } from "./ui.js";
 
-requireAuth();
-initSidebarLogout();
-
 const productSelect = document.getElementById("productSelect");
 const cartTable = document.getElementById("cartTable");
 const cartTotal = document.getElementById("cartTotal");
+const cartEmptyZone = document.querySelector(".cart-empty-zone");
 const addToCartButton = document.getElementById("addToCartButton");
 const submitSaleButton = document.getElementById("submitSaleButton");
 const availableProductsList = document.getElementById("availableProductsList");
@@ -24,6 +25,27 @@ const increaseQtyBtn = document.getElementById("increaseQtyBtn");
 let products = [];
 let cart = [];
 let selectedQuantity = 1;
+
+function getSelectedProduct() {
+  const productId = Number(productSelect.value);
+  return products.find((product) => product.id === productId);
+}
+
+// Units of the selected product that are not already in the cart.
+function remainingStock(product) {
+  if (!product) return 0;
+  const inCart = cart.find((item) => item.product_id === product.id);
+  return product.stock_quantity - (inCart ? inCart.quantity : 0);
+}
+
+function updateQuantityUI() {
+  const max = Math.max(1, remainingStock(getSelectedProduct()));
+  if (selectedQuantity > max) selectedQuantity = max;
+
+  saleQtyValue.textContent = selectedQuantity;
+  decreaseQtyBtn.disabled = selectedQuantity <= 1;
+  increaseQtyBtn.disabled = selectedQuantity >= max;
+}
 
 decreaseQtyBtn.addEventListener("click", () => {
   if (selectedQuantity > 1) {
@@ -37,45 +59,38 @@ increaseQtyBtn.addEventListener("click", () => {
   updateQuantityUI();
 });
 
-function refreshLucideIcons() {
-  if (window.lucide) {
-    lucide.createIcons();
-  }
-}
-
-function updateQuantityUI() {
-  saleQtyValue.textContent = selectedQuantity;
-}
+productSelect.addEventListener("change", () => {
+  selectedQuantity = 1;
+  updateQuantityUI();
+});
 
 async function loadProducts() {
   try {
     const response = await apiFetch("/products/");
-    products = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(products.detail || "Failed to load products", "error");
+      showToast(getErrorMessage(data, "Failed to load products"), "error");
       return;
     }
 
-    const availableProducts = products.filter(
-      (product) => Number(product.stock_quantity) > 0
-    );
+    products = data;
+    const availableProducts = products.filter((product) => product.stock_quantity > 0);
 
-    productSelect.innerHTML = availableProducts
-      .map(
-        (product) => `
-          <option value="${product.id}">
-            ${product.name} — ${formatCurrency(product.price)} — Stock: ${product.stock_quantity}
-          </option>
-        `
-      )
-      .join("");
-
-    if (!availableProducts.length) {
-      productSelect.innerHTML = `<option value="">No products available</option>`;
-    }
+    productSelect.innerHTML = availableProducts.length
+      ? availableProducts
+          .map(
+            (product) => `
+              <option value="${product.id}">
+                ${escapeHtml(product.name)} — ${formatCurrency(product.price)} — Stock: ${escapeHtml(product.stock_quantity)}
+              </option>
+            `
+          )
+          .join("")
+      : `<option value="">No products available</option>`;
 
     renderAvailableProducts(availableProducts);
+    updateQuantityUI();
   } catch (error) {
     console.error(error);
     showToast("Failed to load products", "error");
@@ -97,47 +112,36 @@ function renderAvailableProducts(productList) {
               <i data-lucide="package"></i>
             </div>
             <div class="product-meta">
-              <div class="product-name">${product.name}</div>
+              <div class="product-name">${escapeHtml(product.name)}</div>
               <div class="product-price">${formatCurrency(product.price)}</div>
             </div>
           </div>
-          <div class="stock-pill">Stock: ${product.stock_quantity}</div>
+          <div class="stock-pill">Stock: ${escapeHtml(product.stock_quantity)}</div>
         </div>
       `
     )
     .join("");
 
-  refreshLucideIcons();
+  refreshIcons();
 }
 
 addToCartButton.addEventListener("click", () => {
-  const productId = Number(productSelect.value);
+  const product = getSelectedProduct();
   const quantity = selectedQuantity;
 
-  if (!productId || quantity <= 0) {
+  if (!product || quantity <= 0) {
     showToast("Select a valid product and quantity", "error");
     return;
   }
 
-  const product = products.find((p) => p.id === productId);
-
-  if (!product) {
-    showToast("Product not found", "error");
-    return;
-  }
-
-  if (quantity > Number(product.stock_quantity)) {
+  if (quantity > remainingStock(product)) {
     showToast("Not enough stock", "error");
     return;
   }
 
-  const existing = cart.find((item) => item.product_id === productId);
+  const existing = cart.find((item) => item.product_id === product.id);
 
   if (existing) {
-    if (existing.quantity + quantity > Number(product.stock_quantity)) {
-      showToast("Not enough stock for combined quantity", "error");
-      return;
-    }
     existing.quantity += quantity;
   } else {
     cart.push({
@@ -149,33 +153,33 @@ addToCartButton.addEventListener("click", () => {
   }
 
   selectedQuantity = 1;
-  updateQuantityUI();
   renderCart();
+  updateQuantityUI();
   showToast("Item added to cart", "success");
 });
 
 function renderCart() {
   if (!cart.length) {
     cartTable.innerHTML = "";
-    const emptyZone = document.querySelector(".cart-empty-zone");
-    emptyZone.innerHTML = `<div class="empty-state">Your cart is empty.</div>`;
+    cartEmptyZone.innerHTML = `<div class="empty-state">Your cart is empty.</div>`;
     cartTotal.textContent = formatCurrency(0);
+    submitSaleButton.disabled = true;
     return;
   }
 
-  const emptyZone = document.querySelector(".cart-empty-zone");
-  emptyZone.innerHTML = "";
+  cartEmptyZone.innerHTML = "";
+  submitSaleButton.disabled = false;
 
   cartTable.innerHTML = cart
     .map(
       (item, index) => `
         <tr>
-          <td>${item.product_name}</td>
-          <td>${item.quantity}</td>
+          <td>${escapeHtml(item.product_name)}</td>
+          <td>${escapeHtml(item.quantity)}</td>
           <td>${formatCurrency(item.unit_price)}</td>
           <td>${formatCurrency(item.unit_price * item.quantity)}</td>
           <td>
-            <button class="btn btn-danger icon-btn" onclick="removeCartItem(${index})">
+            <button class="btn btn-danger icon-btn" data-remove-index="${index}">
               <i data-lucide="trash-2"></i>
               <span>Remove</span>
             </button>
@@ -185,16 +189,21 @@ function renderCart() {
     )
     .join("");
 
+  // Display only: the server recalculates the total from current prices.
   const total = cart.reduce((sum, item) => sum + item.unit_price * item.quantity, 0);
   cartTotal.textContent = formatCurrency(total);
 
-  refreshLucideIcons();
+  refreshIcons();
 }
 
-window.removeCartItem = function (index) {
-  cart.splice(index, 1);
+cartTable.addEventListener("click", (e) => {
+  const button = e.target.closest("[data-remove-index]");
+  if (!button) return;
+
+  cart.splice(Number(button.dataset.removeIndex), 1);
   renderCart();
-};
+  updateQuantityUI();
+});
 
 submitSaleButton.addEventListener("click", async () => {
   if (!cart.length) {
@@ -215,25 +224,29 @@ submitSaleButton.addEventListener("click", async () => {
       })
     });
 
-    const data = await response.json();
+    const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(data.detail || "Sale creation failed", "error");
+      showToast(getErrorMessage(data, "Sale creation failed"), "error");
+      // Stock may have changed since the page loaded.
+      loadProducts();
       return;
     }
 
     showToast(`Sale #${data.id} created`, "success");
     cart = [];
-    renderCart();
     loadProducts();
   } catch (error) {
     console.error(error);
     showToast("Request failed", "error");
   } finally {
     setButtonLoading(submitSaleButton, false);
+    renderCart();
   }
 });
 
-loadProducts();
-renderCart();
-updateQuantityUI();
+if (await initProtectedPage()) {
+  renderCart();
+  updateQuantityUI();
+  loadProducts();
+}

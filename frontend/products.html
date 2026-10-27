@@ -6,7 +6,7 @@
   <title>StockFlow Products</title>
   <link rel="stylesheet" href="assets/css/main.css" />
   <link rel="stylesheet" href="assets/css/products.css" />
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -42,6 +42,10 @@
       </nav>
 
       <div class="sidebar-footer">
+        <div class="sidebar-user" data-current-user hidden>
+          <div class="sidebar-user-name" data-user-name></div>
+          <div class="sidebar-user-role" data-user-role></div>
+        </div>
         <button class="btn btn-secondary logout-btn" data-logout>
           <i data-lucide="log-out"></i>
           <span>Logout</span>
@@ -57,7 +61,7 @@
         </div>
       </div>
 
-      <section class="card product-form-card">
+      <section class="card product-form-card" data-role="admin">
         <div class="card-header">
           <h3>Add New Product</h3>
         </div>
@@ -76,12 +80,12 @@
 
             <div class="field">
               <label for="price">Price</label>
-              <input id="price" class="input" type="number" step="0.01" required />
+              <input id="price" class="input" type="number" step="0.01" min="0.01" required />
             </div>
 
             <div class="field">
               <label for="stock_quantity">Stock</label>
-              <input id="stock_quantity" class="input" type="number" required />
+              <input id="stock_quantity" class="input" type="number" min="0" step="1" required />
             </div>
 
             <div style="grid-column: 1 / -1;">
@@ -97,6 +101,7 @@
       <section class="card">
         <div class="card-header">
           <h3>Active Products</h3>
+          <input id="productSearch" class="input table-search" type="search" placeholder="Search name or barcode" aria-label="Search products" />
         </div>
 
         <div class="card-body">
@@ -109,10 +114,32 @@
                   <th>Barcode</th>
                   <th>Price</th>
                   <th>Stock</th>
-                  <th>Actions</th>
+                  <th data-role="admin">Actions</th>
                 </tr>
               </thead>
               <tbody id="productsTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section-spacing" data-role="admin">
+        <div class="card-header">
+          <h3>Archived Products</h3>
+        </div>
+
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Name</th>
+                  <th>Barcode</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="archivedProductsTable"></tbody>
             </table>
           </div>
         </div>
@@ -132,18 +159,18 @@
             <div class="modal-subtitle">Enter the quantity you want to apply.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeStockModalBtn" aria-label="Close stock modal">&times;</button>
+        <button class="modal-close" id="closeStockModalBtn" type="button" data-close-modal aria-label="Close stock modal">&times;</button>
       </div>
 
       <div class="modal-body">
         <div class="field">
           <label for="stockModalQuantity">Quantity</label>
-          <input id="stockModalQuantity" class="input" type="number" min="1" />
+          <input id="stockModalQuantity" class="input" type="number" min="1" step="1" />
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelStockModalBtn">Cancel</button>
+        <button class="btn btn-secondary" id="cancelStockModalBtn" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-primary" id="confirmStockModalBtn">Confirm</button>
       </div>
     </div>
@@ -158,10 +185,10 @@
           </div>
           <div>
             <div class="modal-title">Edit Product</div>
-            <div class="modal-subtitle">Update the product information below.</div>
+            <div class="modal-subtitle">Stock changes made here are logged as adjustments.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeEditModalBtn" aria-label="Close edit modal">&times;</button>
+        <button class="modal-close" id="closeEditModalBtn" type="button" data-close-modal aria-label="Close edit modal">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -178,18 +205,18 @@
 
           <div class="field">
             <label for="editPrice">Price</label>
-            <input id="editPrice" class="input" type="number" step="0.01" />
+            <input id="editPrice" class="input" type="number" step="0.01" min="0.01" />
           </div>
 
           <div class="field">
             <label for="editStock">Stock Quantity</label>
-            <input id="editStock" class="input" type="number" />
+            <input id="editStock" class="input" type="number" min="0" step="1" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelEditModalBtn">Cancel</button>
+        <button class="btn btn-secondary" id="cancelEditModalBtn" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-primary" id="saveEditModalBtn">Save</button>
       </div>
     </div>
@@ -207,7 +234,7 @@
             <div class="modal-subtitle">The product will be hidden from active lists.</div>
           </div>
         </div>
-        <button class="modal-close" id="closeDeleteModalBtn" aria-label="Close archive modal">&times;</button>
+        <button class="modal-close" id="closeDeleteModalBtn" type="button" data-close-modal aria-label="Close archive modal">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -215,7 +242,7 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" id="cancelDeleteModalBtn">Cancel</button>
+        <button class="btn btn-secondary" id="cancelDeleteModalBtn" type="button" data-close-modal>Cancel</button>
         <button class="btn btn-danger" id="confirmDeleteModalBtn">Archive</button>
       </div>
     </div>

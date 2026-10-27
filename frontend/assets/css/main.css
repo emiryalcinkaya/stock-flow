@@ -720,3 +720,70 @@ select {
     width: 100%;
   }
 }
+
+/* ----- Shared additions ----- */
+
+[hidden] {
+  display: none !important;
+}
+
+.sidebar-user {
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+}
+
+.sidebar-user-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-user-role {
+  font-size: 13px;
+  color: var(--muted);
+  text-transform: capitalize;
+}
+
+.card-header:has(.table-search) {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.table-search {
+  max-width: 280px;
+}
+
+.empty-row td {
+  padding: 12px 0;
+  border: none;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-completed {
+  color: var(--success);
+  background: rgba(31, 157, 85, 0.1);
+}
+
+.status-cancelled {
+  color: var(--danger);
+  background: rgba(217, 45, 32, 0.1);
+}
+
+.row-selected td {
+  background: rgba(0, 0, 0, 0.03);
+}
