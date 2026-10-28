@@ -1,5 +1,5 @@
-import { apiFetch, readJson } from "./config.js";
-import { escapeHtml } from "./ui.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { escapeHtml } from "./ui.js?v=5";
 
 // Shared lookups (units, categories, warehouses) used by several pages.
 

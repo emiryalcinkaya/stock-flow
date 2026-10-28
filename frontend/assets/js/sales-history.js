@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js";
-import { initProtectedPage, isAdmin } from "./auth.js";
-import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { initProtectedPage, isAdmin } from "./auth.js?v=5";
+import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js?v=5";
 import {
   escapeHtml,
   formatCurrency,
@@ -11,7 +11,7 @@ import {
   setButtonLoading,
   showToast,
   statusBadge
-} from "./ui.js";
+} from "./ui.js?v=5";
 
 const salesHistoryTable = document.getElementById("salesHistoryTable");
 const saleDetailPanel = document.getElementById("saleDetailPanel");

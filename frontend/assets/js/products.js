@@ -1,5 +1,5 @@
-import { apiFetch, readJson } from "./config.js";
-import { initProtectedPage, isAdmin } from "./auth.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { initProtectedPage, isAdmin } from "./auth.js?v=5";
 import {
   categoryOptions,
   formatQuantity,
@@ -11,7 +11,7 @@ import {
   quantityStep,
   unitOptions,
   warehouseOptions
-} from "./inventory.js";
+} from "./inventory.js?v=5";
 import {
   escapeHtml,
   formatCurrency,
@@ -21,7 +21,7 @@ import {
   renderEmptyRow,
   setButtonLoading,
   showToast
-} from "./ui.js";
+} from "./ui.js?v=5";
 
 const productsTable = document.getElementById("productsTable");
 const archivedProductsTable = document.getElementById("archivedProductsTable");
@@ -30,6 +30,7 @@ const addProductButton = document.getElementById("addProductButton");
 const productSearch = document.getElementById("productSearch");
 const categoryFilter = document.getElementById("categoryFilter");
 const lowStockFilter = document.getElementById("lowStockFilter");
+const sortSelect = document.getElementById("sortSelect");
 
 const formCategory = document.getElementById("category");
 const formUnit = document.getElementById("unit");
@@ -135,6 +136,7 @@ function buildProductQuery() {
   if (search) params.set("search", search);
   if (categoryFilter.value) params.set("category_id", categoryFilter.value);
   if (lowStockFilter.checked) params.set("low_stock", "true");
+  if (sortSelect.value !== "id") params.set("sort", sortSelect.value);
   const query = params.toString();
   return query ? `?${query}` : "";
 }
@@ -354,6 +356,7 @@ productSearch.addEventListener("input", () => {
 });
 categoryFilter.addEventListener("change", loadProducts);
 lowStockFilter.addEventListener("change", loadProducts);
+sortSelect.addEventListener("change", loadProducts);
 
 // ----- Modals -----
 

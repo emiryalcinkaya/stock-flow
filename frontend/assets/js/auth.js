@@ -7,8 +7,8 @@ import {
   readJson,
   setCachedUser,
   setToken
-} from "./config.js";
-import { getErrorMessage, setButtonLoading, showToast } from "./ui.js";
+} from "./config.js?v=5";
+import { getErrorMessage, refreshIcons, setButtonLoading, showToast } from "./ui.js?v=5";
 
 export function requireAuth() {
   const token = getToken();
@@ -65,6 +65,44 @@ function renderSidebarUser(user) {
   container.hidden = false;
 }
 
+const SIDEBAR_KEY = "sidebarCollapsed";
+
+// Each page's <head> applies the saved state before render, so there is no flash.
+function initSidebarToggle() {
+  const brand = document.querySelector(".sidebar .brand");
+  if (!brand) return;
+
+  // Collapsed sidebar shows icons only, so give every item a hover label.
+  document.querySelectorAll(".sidebar .nav-link, .sidebar [data-logout]").forEach((item) => {
+    item.title = item.textContent.trim();
+  });
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "sidebar-toggle";
+  brand.appendChild(button);
+
+  const render = () => {
+    const collapsed = document.documentElement.classList.contains("sidebar-collapsed");
+    button.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
+    button.title = button.getAttribute("aria-label");
+    button.innerHTML = `<i data-lucide="${collapsed ? "panel-left-open" : "panel-left-close"}"></i>`;
+    refreshIcons();
+  };
+
+  button.addEventListener("click", () => {
+    const collapsed = document.documentElement.classList.toggle("sidebar-collapsed");
+    try {
+      localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works for this page.
+    }
+    render();
+  });
+
+  render();
+}
+
 /**
  * Common setup for every protected page.
  * Returns the current user, or null when the visitor is being redirected.
@@ -73,6 +111,7 @@ export async function initProtectedPage() {
   if (!requireAuth()) return null;
 
   initSidebarLogout();
+  initSidebarToggle();
 
   const user = await loadCurrentUser();
   if (!user) {

@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eysto Dashboard</title>
-  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/dashboard.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=10" />
+  <link rel="stylesheet" href="assets/css/dashboard.css?v=6" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -69,10 +70,10 @@
       <section class="card hero-card dashboard-hero">
         <div>
           <div class="hero-brand">
-            <img src="assets/images/logo.svg" alt="Eysto logo" class="hero-brand-logo" />
+            <img id="companyLogo" src="assets/images/logo.svg" alt="" class="hero-brand-logo" />
             <div class="hero-brand-copy">
-              <h2 class="hero-brand-title">Eysto</h2>
-              <p class="hero-brand-tagline">Track products, stock levels and movements across your warehouses.</p>
+              <h2 id="companyName" class="hero-brand-title">Eysto</h2>
+              <p id="companyDescription" class="hero-brand-tagline">Track products, stock levels and movements across your warehouses.</p>
             </div>
           </div>
         </div>
@@ -168,7 +169,7 @@
     </main>
   </div>
 
-  <script type="module" src="assets/js/dashboard.js"></script>
+  <script type="module" src="assets/js/dashboard.js?v=5"></script>
   <script>
     lucide.createIcons();
   </script>

@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eysto Settings</title>
-  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/products.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=10" />
+  <link rel="stylesheet" href="assets/css/products.css?v=5" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -62,11 +63,55 @@
       <div class="topbar">
         <div>
           <h1 class="page-title">Settings</h1>
-          <p class="page-subtitle">Categories and warehouses.</p>
+          <p class="page-subtitle">Your business, categories and warehouses.</p>
         </div>
       </div>
 
-      <section class="grid grid-2">
+      <section class="card">
+        <div class="card-header">
+          <h3>Business</h3>
+        </div>
+        <div class="card-body">
+          <form id="companyForm" class="company-form">
+            <div class="company-logo-field">
+              <img id="companyLogoPreview" class="company-logo-preview" src="assets/images/logo.svg" alt="Business logo preview" />
+              <div class="company-logo-actions">
+                <label class="btn btn-secondary icon-btn" for="companyLogoInput">
+                  <i data-lucide="upload"></i>
+                  <span>Upload Logo</span>
+                </label>
+                <input id="companyLogoInput" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" hidden />
+                <button id="removeLogoButton" class="btn btn-secondary icon-btn" type="button">
+                  <i data-lucide="trash-2"></i>
+                  <span>Remove</span>
+                </button>
+                <p class="metric-note">PNG, JPEG, WebP or SVG. Shown on the dashboard.</p>
+              </div>
+            </div>
+
+            <div class="form-grid">
+              <div class="field">
+                <label for="companyName">Business Name</label>
+                <input id="companyName" class="input" type="text" maxlength="100" placeholder="Eysto" />
+              </div>
+              <div class="field">
+                <label for="companyDescription">Short Description</label>
+                <input id="companyDescription" class="input" type="text" maxlength="300"
+                  placeholder="Track products, stock levels and movements across your warehouses." />
+              </div>
+            </div>
+
+            <div>
+              <button id="saveCompanyButton" class="btn btn-primary icon-btn" type="submit">
+                <i data-lucide="check"></i>
+                <span>Save</span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="grid grid-2 section-spacing">
         <div class="card">
           <div class="card-header">
             <h3>Categories</h3>
@@ -132,7 +177,7 @@
     </main>
   </div>
 
-  <script type="module" src="assets/js/settings.js"></script>
+  <script type="module" src="assets/js/settings.js?v=5"></script>
   <script>
     lucide.createIcons();
   </script>

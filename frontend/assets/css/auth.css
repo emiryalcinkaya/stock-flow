@@ -26,8 +26,8 @@
 }
 
 .auth-brand-logo {
-  width: 44px;
-  height: 44px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
   flex-shrink: 0;
 }

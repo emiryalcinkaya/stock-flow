@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js";
-import { initProtectedPage } from "./auth.js";
-import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { initProtectedPage } from "./auth.js?v=5";
+import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js?v=5";
 import {
   escapeHtml,
   formatCurrency,
@@ -9,7 +9,7 @@ import {
   renderEmptyRow,
   showToast,
   statusBadge
-} from "./ui.js";
+} from "./ui.js?v=5";
 
 const totalProductsEl = document.getElementById("totalProducts");
 const lowStockCountEl = document.getElementById("lowStockCount");
@@ -19,6 +19,21 @@ const totalRevenueEl = document.getElementById("totalRevenue");
 const salesNoteEl = document.getElementById("salesNote");
 const lowStockTable = document.getElementById("lowStockTable");
 const recentSalesTable = document.getElementById("recentSalesTable");
+const companyLogoEl = document.getElementById("companyLogo");
+const companyNameEl = document.getElementById("companyName");
+const companyDescriptionEl = document.getElementById("companyDescription");
+
+// The welcome card shows the business using Eysto; Eysto's own branding is the fallback.
+async function loadCompany() {
+  const response = await apiFetch("/company");
+  if (!response.ok) return;
+
+  const company = await readJson(response);
+  if (company.name) companyNameEl.textContent = company.name;
+  if (company.description) companyDescriptionEl.textContent = company.description;
+  if (company.logo) companyLogoEl.src = company.logo;
+  companyLogoEl.alt = company.name ? `${company.name} logo` : "";
+}
 
 async function loadDashboard() {
   try {
@@ -99,5 +114,6 @@ function renderRecentSales(sales) {
 }
 
 if (await initProtectedPage()) {
+  loadCompany().catch((error) => console.error(error));
   loadDashboard();
 }

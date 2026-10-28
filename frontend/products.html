@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eysto Products</title>
-  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
-  <link rel="stylesheet" href="assets/css/main.css" />
-  <link rel="stylesheet" href="assets/css/products.css" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=10" />
+  <link rel="stylesheet" href="assets/css/products.css?v=5" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body>
@@ -137,9 +138,22 @@
             <div class="select-shell">
               <select id="categoryFilter" class="select" aria-label="Filter by category"></select>
             </div>
-            <label class="checkbox-label">
+            <div class="select-shell">
+              <select id="sortSelect" class="select" aria-label="Sort products">
+                <option value="id">Sort: ID</option>
+                <option value="newest">Newest first</option>
+                <option value="name">Name (A–Z)</option>
+                <option value="low_stock_first">Low stock first</option>
+                <option value="stock_asc">Stock: low to high</option>
+                <option value="stock_desc">Stock: high to low</option>
+                <option value="price_asc">Price: low to high</option>
+                <option value="price_desc">Price: high to low</option>
+              </select>
+            </div>
+            <label class="filter-toggle">
               <input id="lowStockFilter" type="checkbox" />
-              <span>Low stock only</span>
+              <i data-lucide="triangle-alert"></i>
+              <span>Low stock</span>
             </label>
           </div>
         </div>
@@ -405,7 +419,7 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/products.js"></script>
+  <script type="module" src="assets/js/products.js?v=6"></script>
   <script>
     lucide.createIcons();
   </script>

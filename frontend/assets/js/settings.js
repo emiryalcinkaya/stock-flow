@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js";
-import { initProtectedPage, isAdmin } from "./auth.js";
-import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, showToast } from "./ui.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { initProtectedPage, isAdmin } from "./auth.js?v=5";
+import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, showToast } from "./ui.js?v=5";
 
 const categoryForm = document.getElementById("categoryForm");
 const categoryName = document.getElementById("categoryName");
@@ -21,6 +21,112 @@ async function request(endpoint, method = "GET", body) {
   }
   return data;
 }
+
+// ----- Business -----
+
+const DEFAULT_LOGO = "assets/images/logo.svg";
+const MAX_LOGO_SIDE = 256;
+const MAX_LOGO_BYTES = 300 * 1024;
+
+const companyForm = document.getElementById("companyForm");
+const companyNameInput = document.getElementById("companyName");
+const companyDescriptionInput = document.getElementById("companyDescription");
+const companyLogoInput = document.getElementById("companyLogoInput");
+const companyLogoPreview = document.getElementById("companyLogoPreview");
+const removeLogoButton = document.getElementById("removeLogoButton");
+const saveCompanyButton = document.getElementById("saveCompanyButton");
+
+// null = no logo (Eysto's is shown instead); a data URL = the business logo.
+let companyLogo = null;
+
+function showLogo() {
+  companyLogoPreview.src = companyLogo || DEFAULT_LOGO;
+  removeLogoButton.hidden = !companyLogo;
+}
+
+function readAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Photos can be several MB; shrink them to a small PNG before sending.
+async function toLogoDataUrl(file) {
+  const dataUrl = await readAsDataUrl(file);
+  if (file.type === "image/svg+xml") return dataUrl;
+
+  // onload instead of image.decode(): decode() can hang in some browsers.
+  const image = await new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Unreadable image"));
+    img.src = dataUrl;
+  });
+
+  const scale = Math.min(1, MAX_LOGO_SIDE / Math.max(image.width, image.height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(image.width * scale);
+  canvas.height = Math.round(image.height * scale);
+  canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas.toDataURL("image/png");
+}
+
+async function loadCompany() {
+  const company = await request("/company");
+  if (!company) return;
+
+  companyNameInput.value = company.name || "";
+  companyDescriptionInput.value = company.description || "";
+  companyLogo = company.logo;
+  showLogo();
+}
+
+companyLogoInput.addEventListener("change", async () => {
+  const file = companyLogoInput.files[0];
+  companyLogoInput.value = "";
+  if (!file) return;
+
+  // Saving while the image is still being processed would drop the new logo.
+  saveCompanyButton.disabled = true;
+
+  try {
+    const dataUrl = await toLogoDataUrl(file);
+    // Base64 is ~4/3 of the binary size.
+    if (dataUrl.length * 0.75 > MAX_LOGO_BYTES) {
+      showToast("Logo is too large (max 300 KB)", "error");
+      return;
+    }
+    companyLogo = dataUrl;
+    showLogo();
+  } catch (error) {
+    console.error(error);
+    showToast("This image could not be read", "error");
+  } finally {
+    saveCompanyButton.disabled = false;
+  }
+});
+
+removeLogoButton.addEventListener("click", () => {
+  companyLogo = null;
+  showLogo();
+});
+
+companyForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  saveCompanyButton.disabled = true;
+
+  const saved = await request("/company", "PATCH", {
+    name: companyNameInput.value,
+    description: companyDescriptionInput.value,
+    logo: companyLogo
+  });
+
+  saveCompanyButton.disabled = false;
+  if (saved) showToast("Business details saved", "success");
+});
 
 // ----- Categories -----
 
@@ -191,6 +297,7 @@ const currentUser = await initProtectedPage();
 if (currentUser && !isAdmin(currentUser)) {
   window.location.replace("dashboard.html");
 } else if (currentUser) {
+  loadCompany();
   loadCategories();
   loadWarehouses();
 }

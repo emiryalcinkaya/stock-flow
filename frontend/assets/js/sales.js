@@ -1,5 +1,5 @@
-import { apiFetch, readJson } from "./config.js";
-import { initProtectedPage } from "./auth.js";
+import { apiFetch, readJson } from "./config.js?v=5";
+import { initProtectedPage } from "./auth.js?v=5";
 import {
   formatQuantity,
   isWholeUnit,
@@ -9,7 +9,7 @@ import {
   quantityStep,
   STOCK_OUT_REASONS,
   warehouseOptions
-} from "./inventory.js";
+} from "./inventory.js?v=5";
 import {
   escapeHtml,
   formatCurrency,
@@ -18,7 +18,7 @@ import {
   renderEmptyState,
   setButtonLoading,
   showToast
-} from "./ui.js";
+} from "./ui.js?v=5";
 
 const reasonSelect = document.getElementById("reasonSelect");
 const warehouseSelect = document.getElementById("warehouseSelect");

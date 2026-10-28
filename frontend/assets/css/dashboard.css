@@ -51,10 +51,15 @@
   color: #111;
 }
 
+/* Always stacked, whether the sidebar is wide or collapsed. */
 .action-inline {
   display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
   gap: 12px;
-  max-width: 420px;
+  width: 260px;
+  max-width: 100%;
+  flex-shrink: 0;
 }
 
 .action-inline .btn {
