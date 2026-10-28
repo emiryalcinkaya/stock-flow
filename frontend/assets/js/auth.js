@@ -14,6 +14,10 @@ import { getErrorMessage, setButtonLoading, setCurrency, showToast } from "./ui.
 
 const COMPANY_KEY = "companyLoaded";
 
+// Page scripts import this module, so this runs before their own code.
+// Waiting forever stops them from running against an outdated page.
+if (await reloadIfStale()) await new Promise(() => {});
+
 export function requireAuth() {
   const token = getToken();
   if (!token || isTokenExpired(token)) {
@@ -112,6 +116,31 @@ export async function initProtectedPage({ adminOnly = false } = {}) {
   document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", logout));
   applyRoleVisibility(user);
   return user;
+}
+
+/**
+ * Browsers can keep an HTML page from an older version in their cache while
+ * loading the current scripts. Current pages carry data-title-key; when it is
+ * missing, fetch the page again from the server and reload (once per page and session).
+ */
+async function reloadIfStale() {
+  if (document.body.dataset.titleKey) return false;
+
+  const key = `staleReload:${window.location.pathname}`;
+  try {
+    if (sessionStorage.getItem(key)) return false;
+    sessionStorage.setItem(key, "1");
+  } catch {
+    return false;
+  }
+
+  try {
+    await fetch(window.location.href, { cache: "reload" });
+  } catch {
+    // Offline or blocked: a plain reload is the best we can do.
+  }
+  window.location.reload();
+  return true;
 }
 
 export function languageOptions(selected = getLanguage()) {

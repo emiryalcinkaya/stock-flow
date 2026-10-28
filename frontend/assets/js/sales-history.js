@@ -1,5 +1,5 @@
 import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage, isAdmin } from "./auth.js?v=7";
+import { initProtectedPage, isAdmin } from "./auth.js?v=8";
 import { csvDelimiter, t } from "./i18n.js?v=7";
 import { formatQuantity, reasonLabel, reasonOptions } from "./inventory.js?v=7";
 import {

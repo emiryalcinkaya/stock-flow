@@ -1,5 +1,5 @@
 import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage, languageOptions } from "./auth.js?v=7";
+import { initProtectedPage, languageOptions } from "./auth.js?v=8";
 import { setLanguage, t } from "./i18n.js?v=7";
 import { getErrorMessage, setButtonLoading, showToast } from "./ui.js?v=7";
 
