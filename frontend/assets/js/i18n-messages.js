@@ -9,7 +9,6 @@ const en = {
   "nav.stockCounts": "Stock Count",
   "nav.reports": "Reports",
   "nav.settings": "Settings",
-  "nav.users": "Users",
   "nav.account": "My Account",
   "nav.logout": "Logout",
   "nav.collapse": "Collapse sidebar",
@@ -354,7 +353,7 @@ const en = {
   "reports.loadFailed": "Failed to load the report",
 
   // Settings
-  "settings.subtitle": "Your business, categories, warehouses and suppliers.",
+  "settings.subtitle": "Your business, categories, warehouses, suppliers and users.",
   "settings.business": "Business",
   "settings.uploadLogo": "Upload Logo",
   "settings.logoHint": "PNG, JPEG, WebP or SVG. Shown on the dashboard.",
@@ -386,7 +385,6 @@ const en = {
   "settings.renamed": "Renamed",
 
   // Users
-  "users.subtitle": "Who can sign in and what they can do.",
   "users.addTitle": "Add User",
   "users.add": "Add User",
   "users.added": "{name} can now sign in",
@@ -460,7 +458,6 @@ const tr = {
   "nav.stockCounts": "Stok Sayımı",
   "nav.reports": "Raporlar",
   "nav.settings": "Ayarlar",
-  "nav.users": "Kullanıcılar",
   "nav.account": "Hesabım",
   "nav.logout": "Çıkış Yap",
   "nav.collapse": "Menüyü daralt",
@@ -794,7 +791,7 @@ const tr = {
   "reports.noPurchases": "Bu dönemde tedarikçili teslimat yok.",
   "reports.loadFailed": "Rapor yüklenemedi",
 
-  "settings.subtitle": "İşletmeniz, kategoriler, depolar ve tedarikçiler.",
+  "settings.subtitle": "İşletmeniz, kategoriler, depolar, tedarikçiler ve kullanıcılar.",
   "settings.business": "İşletme",
   "settings.uploadLogo": "Logo Yükle",
   "settings.logoHint": "PNG, JPEG, WebP veya SVG. Panelde gösterilir.",
@@ -825,7 +822,6 @@ const tr = {
   "settings.newName": "Yeni ad",
   "settings.renamed": "Ad değiştirildi",
 
-  "users.subtitle": "Kimlerin giriş yapabileceği ve neler yapabileceği.",
   "users.addTitle": "Kullanıcı Ekle",
   "users.add": "Kullanıcı Ekle",
   "users.added": "{name} artık giriş yapabilir",
@@ -897,7 +893,6 @@ const de = {
   "nav.stockCounts": "Inventur",
   "nav.reports": "Berichte",
   "nav.settings": "Einstellungen",
-  "nav.users": "Benutzer",
   "nav.account": "Mein Konto",
   "nav.logout": "Abmelden",
   "nav.collapse": "Menü einklappen",
@@ -1231,7 +1226,7 @@ const de = {
   "reports.noPurchases": "Keine Lieferungen mit Lieferant in diesem Zeitraum.",
   "reports.loadFailed": "Bericht konnte nicht geladen werden",
 
-  "settings.subtitle": "Ihr Unternehmen, Kategorien, Lager und Lieferanten.",
+  "settings.subtitle": "Ihr Unternehmen, Kategorien, Lager, Lieferanten und Benutzer.",
   "settings.business": "Unternehmen",
   "settings.uploadLogo": "Logo hochladen",
   "settings.logoHint": "PNG, JPEG, WebP oder SVG. Wird in der Übersicht angezeigt.",
@@ -1262,7 +1257,6 @@ const de = {
   "settings.newName": "Neuer Name",
   "settings.renamed": "Umbenannt",
 
-  "users.subtitle": "Wer sich anmelden darf und was er tun kann.",
   "users.addTitle": "Benutzer hinzufügen",
   "users.add": "Benutzer hinzufügen",
   "users.added": "{name} kann sich jetzt anmelden",

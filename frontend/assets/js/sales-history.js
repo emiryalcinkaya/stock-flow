@@ -1,7 +1,7 @@
-import { apiFetch, readJson } from "./config.js?v=6";
-import { initProtectedPage, isAdmin } from "./auth.js?v=6";
-import { csvDelimiter, t } from "./i18n.js?v=6";
-import { formatQuantity, reasonLabel, reasonOptions } from "./inventory.js?v=6";
+import { apiFetch, readJson } from "./config.js?v=7";
+import { initProtectedPage, isAdmin } from "./auth.js?v=7";
+import { csvDelimiter, t } from "./i18n.js?v=7";
+import { formatQuantity, reasonLabel, reasonOptions } from "./inventory.js?v=7";
 import {
   downloadFile,
   escapeHtml,
@@ -16,7 +16,7 @@ import {
   showToast,
   statusBadge,
   totalCount
-} from "./ui.js?v=6";
+} from "./ui.js?v=7";
 
 const salesHistoryTable = document.getElementById("salesHistoryTable");
 const saleDetailPanel = document.getElementById("saleDetailPanel");

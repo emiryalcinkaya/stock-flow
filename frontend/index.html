@@ -5,24 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
-  <link rel="stylesheet" href="assets/css/main.css?v=6" />
-  <link rel="stylesheet" href="assets/css/auth.css?v=6" />
+  <link rel="stylesheet" href="assets/css/main.css?v=7" />
+  <link rel="stylesheet" href="assets/css/auth.css?v=7" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body data-title-key="login.title">
+  <div class="select-shell auth-language">
+    <select id="languageSelect" class="select" data-i18n-aria-label="common.language"></select>
+  </div>
+
   <main class="auth-page">
     <section class="auth-card">
-      <div class="auth-top">
-        <div class="auth-brand">
-          <img src="assets/images/logo.svg" alt="" class="auth-brand-logo" />
-        </div>
-        <div class="select-shell auth-language">
-          <select id="languageSelect" class="select" data-i18n-aria-label="common.language"></select>
-        </div>
+      <div class="auth-header">
+        <img src="assets/images/logo.svg" alt="" class="auth-brand-logo" />
+        <h1 class="auth-title">Eysto</h1>
+        <p class="auth-subtitle" data-i18n="login.subtitle"></p>
       </div>
-
-      <h1 class="auth-title">Eysto</h1>
-      <p class="auth-subtitle" data-i18n="login.subtitle"></p>
 
       <form id="loginForm" class="auth-form">
         <div class="field">
@@ -50,7 +48,7 @@
   </main>
 
   <script type="module">
-    import { initLoginPage } from "./assets/js/auth.js?v=6";
+    import { initLoginPage } from "./assets/js/auth.js?v=7";
     initLoginPage();
   </script>
   <script>

@@ -1,4 +1,4 @@
-import { messages } from "./i18n-messages.js?v=6";
+import { messages } from "./i18n-messages.js?v=7";
 
 // Interface language. Stored per browser; defaults to the browser's language.
 

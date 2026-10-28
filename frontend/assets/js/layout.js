@@ -1,5 +1,5 @@
-import { t } from "./i18n.js?v=6";
-import { escapeHtml, refreshIcons } from "./ui.js?v=6";
+import { t } from "./i18n.js?v=7";
+import { escapeHtml, refreshIcons } from "./ui.js?v=7";
 
 // The sidebar is built here once instead of being copied into every page.
 
@@ -10,8 +10,7 @@ const NAV_ITEMS = [
   { page: "stock-out-history", href: "sales-history.html", icon: "history", label: "nav.stockOutHistory" },
   { page: "stock-counts", href: "stock-counts.html", icon: "clipboard-check", label: "nav.stockCounts" },
   { page: "reports", href: "reports.html", icon: "chart-column", label: "nav.reports" },
-  { page: "settings", href: "settings.html", icon: "settings", label: "nav.settings", admin: true },
-  { page: "users", href: "users.html", icon: "users", label: "nav.users", admin: true }
+  { page: "settings", href: "settings.html", icon: "settings", label: "nav.settings", admin: true }
 ];
 
 const SIDEBAR_KEY = "sidebarCollapsed";
