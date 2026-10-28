@@ -128,3 +128,25 @@ def test_edit_does_not_change_stock(client, admin_headers, make_product):
     assert response.status_code == 200
     assert response.json()["name"] == "Renamed"
     assert response.json()["stock_quantity"] == 5
+
+
+def test_sorting(client, admin_headers, make_product):
+    a = make_product(name="banana", price=5, stock=50)
+    b = make_product(name="Apple", price=None, stock=3)
+    c = make_product(name="cherry", price=20, stock=12, min_stock=40)
+
+    def order(sort):
+        products = client.get(f"/api/v1/products/?sort={sort}", headers=admin_headers).json()
+        return [p["id"] for p in products]
+
+    assert order("id") == [a["id"], b["id"], c["id"]]
+    assert order("newest") == [c["id"], b["id"], a["id"]]
+    assert order("name") == [b["id"], a["id"], c["id"]]
+    assert order("stock_asc") == [b["id"], c["id"], a["id"]]
+    assert order("stock_desc") == [a["id"], c["id"], b["id"]]
+    assert order("price_asc") == [a["id"], c["id"], b["id"]]
+    assert order("price_desc") == [c["id"], a["id"], b["id"]]
+    # cherry is 28 below its own minimum, Apple 2 below the default of 5.
+    assert order("low_stock_first") == [c["id"], b["id"], a["id"]]
+
+    assert client.get("/api/v1/products/?sort=bogus", headers=admin_headers).status_code == 422

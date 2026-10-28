@@ -1,11 +1,12 @@
 from typing import List, Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import ADMIN, get_current_user, require_role
+from app.core.config import settings
 from app.core.units import is_valid_quantity_for_unit
 from app.db.models.category import Category
 from app.db.models.product import Product
@@ -25,6 +26,25 @@ from app.schemas.product import (
 from app.services.stock import change_stock, get_product_for_update, get_warehouse
 
 router = APIRouter(prefix="/products", tags=["products"])
+
+ProductSort = Literal[
+    "id", "newest", "name", "stock_asc", "stock_desc", "price_asc", "price_desc", "low_stock_first"
+]
+
+_SORT_ORDER = {
+    "id": lambda: [],
+    "newest": lambda: [Product.id.desc()],
+    "name": lambda: [func.lower(Product.name)],
+    "stock_asc": lambda: [Product.stock_quantity],
+    "stock_desc": lambda: [Product.stock_quantity.desc()],
+    # Products without a price go last in both directions.
+    "price_asc": lambda: [Product.price.asc().nulls_last()],
+    "price_desc": lambda: [Product.price.desc().nulls_last()],
+    # Furthest below its own minimum comes first.
+    "low_stock_first": lambda: [
+        Product.stock_quantity - func.coalesce(Product.min_stock, settings.low_stock_threshold)
+    ],
+}
 
 
 def _ensure_barcode_free(db: Session, barcode: str, exclude_id: Optional[int] = None) -> None:
@@ -95,6 +115,7 @@ def get_products(
     search: Optional[str] = Query(default=None, max_length=100),
     category_id: Optional[int] = None,
     low_stock: bool = False,
+    sort: ProductSort = "id",
     skip: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1, le=500),
     db: Session = Depends(get_db),
@@ -117,7 +138,8 @@ def get_products(
     if low_stock:
         query = query.filter(Product.low_stock_condition())
 
-    return query.order_by(Product.id).offset(skip).limit(limit).all()
+    # Product.id breaks ties so the order is stable across pages.
+    return query.order_by(*_SORT_ORDER[sort](), Product.id).offset(skip).limit(limit).all()
 
 
 @router.get("/{product_id}", response_model=ProductResponse)
