@@ -1,3 +1,5 @@
+from app.db.models.stock_movement import StockMovement
+from app.db.session import SessionLocal
 from tests.conftest import auth_headers
 
 API = "/api/v1"
@@ -282,6 +284,13 @@ def test_report_overview(client, admin_headers, cashier_headers, make_product):
 
     assert report["top_products"][0]["name"] == "Sold"
     assert report["top_products"][0]["quantity"] == 5
+    assert [p["name"] for p in report["slow_movers"]] == ["Idle"]
+
+    # A sale recorded only in the sales tables (before the movement log) also counts as movement.
+    with SessionLocal() as db:
+        db.query(StockMovement).filter(StockMovement.product_id == sold["id"], StockMovement.change < 0).delete()
+        db.commit()
+    report = client.get(f"{API}/reports/overview", headers=admin_headers).json()
     assert [p["name"] for p in report["slow_movers"]] == ["Idle"]
     assert report["warehouses"][0]["value"] == 5 * 10 + 3 * 4
     assert report["suppliers"] == [{"supplier_id": supplier["id"], "name": "Acme", "deliveries": 1, "value": 60.0}]

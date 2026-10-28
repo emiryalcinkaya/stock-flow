@@ -2,7 +2,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import and_, case, func
+from sqlalchemy import and_, case, func, select, union_all
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -19,6 +19,8 @@ from app.services.csv_io import csv_response, format_number
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 PURCHASE_REASONS = (MovementReason.INITIAL, MovementReason.RESTOCK)
+# Exports cover everything unless a start date is given.
+EARLIEST = date(2000, 1, 1)
 
 
 def _period(date_from: Optional[date], date_to: Optional[date]):
@@ -138,10 +140,19 @@ def report_overview(
 
     # ----- Products that haven't left stock for a while --------------------
     slow_since = datetime.now(timezone.utc) - timedelta(days=slow_days)
+    # Stock outs recorded before the movement log existed only live in the
+    # sales tables, so both sources are combined.
+    outgoing = union_all(
+        select(StockMovement.product_id, StockMovement.created_at.label("at")).where(
+            StockMovement.change < 0, StockMovement.reason.notin_(MovementReason.TRANSFERS)
+        ),
+        select(SaleItem.product_id, Sale.created_at.label("at"))
+        .join(Sale, Sale.id == SaleItem.sale_id)
+        .where(Sale.status == SaleStatus.COMPLETED),
+    ).subquery()
     last_out = (
-        db.query(StockMovement.product_id, func.max(StockMovement.created_at).label("last_out"))
-        .filter(StockMovement.change < 0, StockMovement.reason.notin_(MovementReason.TRANSFERS))
-        .group_by(StockMovement.product_id)
+        select(outgoing.c.product_id, func.max(outgoing.c.at).label("last_out"))
+        .group_by(outgoing.c.product_id)
         .subquery()
     )
     slow_movers = (
@@ -233,8 +244,8 @@ def export_movements(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """Every stock movement in the period, oldest first."""
-    _, _, start, end = _period(date_from, date_to)
+    """Every stock movement in the period (all time by default), oldest first."""
+    _, _, start, end = _period(date_from or EARLIEST, date_to)
     decimal_comma = delimiter == "semicolon"
 
     movements = (
@@ -267,8 +278,8 @@ def export_stock_outs(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """One row per stock-out line in the period."""
-    _, _, start, end = _period(date_from, date_to)
+    """One row per stock-out line in the period (all time by default)."""
+    _, _, start, end = _period(date_from or EARLIEST, date_to)
     decimal_comma = delimiter == "semicolon"
 
     items = (
