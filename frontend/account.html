@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eysto</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/products.css?v=6" />
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="account" data-title-key="nav.account">
+  <div class="page-shell">
+    <aside class="sidebar"></aside>
+
+    <main class="content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title" data-i18n="nav.account"></h1>
+          <p class="page-subtitle" id="accountSubtitle"></p>
+        </div>
+      </div>
+
+      <section class="grid grid-2">
+        <div class="card">
+          <div class="card-header">
+            <h3 data-i18n="account.preferences"></h3>
+          </div>
+          <div class="card-body">
+            <div class="field">
+              <label for="languageSelect" data-i18n="common.language"></label>
+              <div class="select-shell">
+                <select id="languageSelect" class="select"></select>
+              </div>
+            </div>
+            <p class="metric-note section-spacing" data-i18n="account.languageHint"></p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 data-i18n="account.changePassword"></h3>
+          </div>
+          <div class="card-body">
+            <form id="passwordForm" class="company-form">
+              <div class="field">
+                <label for="currentPassword" data-i18n="account.currentPassword"></label>
+                <input id="currentPassword" class="input" type="password" autocomplete="current-password" required />
+              </div>
+              <div class="field">
+                <label for="newPassword"><span data-i18n="users.newPassword"></span> <span class="field-hint" data-i18n="users.passwordHint"></span></label>
+                <input id="newPassword" class="input" type="password" minlength="8" maxlength="128" autocomplete="new-password" required />
+              </div>
+              <div class="field">
+                <label for="repeatPassword" data-i18n="account.repeatPassword"></label>
+                <input id="repeatPassword" class="input" type="password" minlength="8" maxlength="128" autocomplete="new-password" required />
+              </div>
+              <div>
+                <button id="changePasswordButton" class="btn btn-primary icon-btn" type="submit">
+                  <i data-lucide="key-round"></i>
+                  <span data-i18n="account.changePassword"></span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/account.js?v=6"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

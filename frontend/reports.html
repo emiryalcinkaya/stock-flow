@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eysto</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/dashboard.css?v=6" />
+  <link rel="stylesheet" href="assets/css/sales.css?v=6" />
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="reports" data-title-key="nav.reports">
+  <div class="page-shell">
+    <aside class="sidebar"></aside>
+
+    <main class="content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title" data-i18n="nav.reports"></h1>
+          <p class="page-subtitle" data-i18n="reports.subtitle"></p>
+        </div>
+        <div class="topbar-actions">
+          <button id="exportMovementsButton" class="btn btn-secondary icon-btn" type="button">
+            <i data-lucide="download"></i>
+            <span data-i18n="reports.exportMovements"></span>
+          </button>
+        </div>
+      </div>
+
+      <section class="card">
+        <div class="card-body">
+          <form id="periodForm" class="sales-filter report-filter">
+            <div class="field">
+              <label for="dateFrom" data-i18n="field.from"></label>
+              <input id="dateFrom" class="input" type="date" />
+            </div>
+            <div class="field">
+              <label for="dateTo" data-i18n="field.to"></label>
+              <input id="dateTo" class="input" type="date" />
+            </div>
+            <div class="sales-filter-actions">
+              <button class="btn btn-primary" type="submit" data-i18n="reports.apply"></button>
+              <button class="btn btn-secondary" type="button" data-preset="month" data-i18n="reports.thisMonth"></button>
+              <button class="btn btn-secondary" type="button" data-preset="year" data-i18n="reports.thisYear"></button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section class="grid grid-4 dashboard-grid section-spacing">
+        <div class="card stat-card">
+          <i class="kpi-icon" data-lucide="package-plus"></i>
+          <div class="stat-label" data-i18n="reports.stockIn"></div>
+          <div class="stat-value" id="stockInValue">-</div>
+          <div class="metric-note" id="stockInNote"></div>
+        </div>
+        <div class="card stat-card">
+          <i class="kpi-icon" data-lucide="package-minus"></i>
+          <div class="stat-label" data-i18n="reports.stockOut"></div>
+          <div class="stat-value" id="stockOutValue">-</div>
+          <div class="metric-note" id="stockOutNote"></div>
+        </div>
+        <div class="card stat-card">
+          <i class="kpi-icon" data-lucide="wallet"></i>
+          <div class="stat-label" data-i18n="dashboard.salesRevenue"></div>
+          <div class="stat-value" id="revenueValue">-</div>
+          <div class="metric-note" data-i18n="reports.revenueNote"></div>
+        </div>
+        <div class="card stat-card">
+          <i class="kpi-icon" data-lucide="trending-up"></i>
+          <div class="stat-label" data-i18n="reports.grossProfit"></div>
+          <div class="stat-value" id="profitValue">-</div>
+          <div class="metric-note" id="profitNote"></div>
+        </div>
+      </section>
+
+      <section class="card section-spacing">
+        <div class="card-header">
+          <h3 data-i18n="reports.monthly"></h3>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-swatch swatch-in"></span><span data-i18n="reports.stockInValue"></span></span>
+            <span class="legend-item"><span class="legend-swatch swatch-out"></span><span data-i18n="reports.stockOutValue"></span></span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div id="monthlyChart" class="bar-chart"></div>
+          <div class="table-wrap section-spacing">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-i18n="reports.month"></th>
+                  <th data-i18n="reports.stockIns"></th>
+                  <th data-i18n="reports.stockInValue"></th>
+                  <th data-i18n="reports.stockOuts"></th>
+                  <th data-i18n="reports.stockOutValue"></th>
+                  <th data-i18n="dashboard.salesRevenue"></th>
+                </tr>
+              </thead>
+              <tbody id="monthlyTable"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-2 section-spacing">
+        <div class="card">
+          <div class="card-header">
+            <h3 data-i18n="reports.topProducts"></h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th data-i18n="col.product"></th>
+                    <th data-i18n="col.quantity"></th>
+                    <th data-i18n="reports.value"></th>
+                  </tr>
+                </thead>
+                <tbody id="topProductsTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 id="slowTitle"></h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th data-i18n="col.product"></th>
+                    <th data-i18n="col.inStock"></th>
+                    <th data-i18n="reports.lastOut"></th>
+                  </tr>
+                </thead>
+                <tbody id="slowTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid grid-2 section-spacing">
+        <div class="card">
+          <div class="card-header">
+            <h3 data-i18n="reports.byWarehouse"></h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th data-i18n="col.warehouse"></th>
+                    <th data-i18n="reports.productsInStock"></th>
+                    <th data-i18n="reports.valueAtPrice"></th>
+                    <th data-i18n="reports.valueAtCost"></th>
+                  </tr>
+                </thead>
+                <tbody id="warehouseTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 data-i18n="reports.bySupplier"></h3>
+          </div>
+          <div class="card-body">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th data-i18n="field.supplier"></th>
+                    <th data-i18n="reports.deliveries"></th>
+                    <th data-i18n="reports.purchaseValue"></th>
+                  </tr>
+                </thead>
+                <tbody id="supplierTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/reports.js?v=6"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

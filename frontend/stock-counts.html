@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eysto</title>
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
+  <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/products.css?v=6" />
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+</head>
+<body data-page="stock-counts" data-title-key="nav.stockCounts">
+  <div class="page-shell">
+    <aside class="sidebar"></aside>
+
+    <main class="content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title" data-i18n="nav.stockCounts"></h1>
+          <p class="page-subtitle" data-i18n="count.subtitle"></p>
+        </div>
+      </div>
+
+      <section class="card" data-role="admin">
+        <div class="card-header">
+          <h3 data-i18n="count.newTitle"></h3>
+        </div>
+        <div class="card-body">
+          <form id="newCountForm" class="form-grid">
+            <div class="field" data-multi-warehouse hidden>
+              <label for="countWarehouse" data-i18n="field.warehouse"></label>
+              <div class="select-shell">
+                <select id="countWarehouse" class="select"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="countCategory" data-i18n="field.category"></label>
+              <div class="select-shell">
+                <select id="countCategory" class="select"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label for="countNote" data-i18n="field.note"></label>
+              <input id="countNote" class="input" type="text" maxlength="500" />
+            </div>
+            <div style="grid-column: 1 / -1;">
+              <p class="metric-note settings-hint" data-i18n="count.howItWorks"></p>
+              <button id="startCountButton" class="btn btn-primary icon-btn" type="submit">
+                <i data-lucide="clipboard-list"></i>
+                <span data-i18n="count.start"></span>
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section id="countDetail" class="card section-spacing" hidden>
+        <div class="card-header">
+          <div>
+            <h3 id="countTitle"></h3>
+            <div id="countMeta" class="metric-note"></div>
+          </div>
+          <div class="table-filters count-filters">
+            <input id="lineSearch" class="input table-search" type="search" data-i18n-placeholder="products.search" data-i18n-aria-label="products.search" />
+            <label class="filter-toggle">
+              <input id="onlyUncounted" type="checkbox" />
+              <i data-lucide="list-todo"></i>
+              <span data-i18n="count.onlyUncounted"></span>
+            </label>
+            <label class="filter-toggle">
+              <input id="onlyDifferences" type="checkbox" />
+              <i data-lucide="diff"></i>
+              <span data-i18n="count.onlyDifferences"></span>
+            </label>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-i18n="col.product"></th>
+                  <th data-i18n="col.barcode"></th>
+                  <th data-i18n="count.expected"></th>
+                  <th data-i18n="count.counted"></th>
+                  <th data-i18n="count.difference"></th>
+                </tr>
+              </thead>
+              <tbody id="countLines"></tbody>
+            </table>
+          </div>
+          <div id="countActions" class="count-actions section-spacing">
+            <span id="countProgress" class="metric-note"></span>
+            <button id="saveCountButton" class="btn btn-secondary icon-btn" type="button">
+              <i data-lucide="save"></i>
+              <span data-i18n="count.save"></span>
+            </button>
+            <button id="completeCountButton" class="btn btn-primary icon-btn" type="button" data-role="admin">
+              <i data-lucide="check-check"></i>
+              <span data-i18n="count.complete"></span>
+            </button>
+            <button id="cancelCountButton" class="btn btn-danger icon-btn" type="button" data-role="admin">
+              <i data-lucide="x"></i>
+              <span data-i18n="count.cancel"></span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card section-spacing">
+        <div class="card-header">
+          <h3 data-i18n="count.listTitle"></h3>
+        </div>
+        <div class="card-body">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th data-i18n="col.id"></th>
+                  <th data-i18n="col.warehouse"></th>
+                  <th data-i18n="col.category"></th>
+                  <th data-i18n="col.status"></th>
+                  <th data-i18n="count.progress"></th>
+                  <th data-i18n="col.user"></th>
+                  <th data-i18n="col.date"></th>
+                  <th data-i18n="col.actions"></th>
+                </tr>
+              </thead>
+              <tbody id="countsTable"></tbody>
+            </table>
+          </div>
+          <div id="countsPager"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="assets/js/stock-counts.js?v=6"></script>
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
