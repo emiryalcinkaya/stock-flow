@@ -1,17 +1,22 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { initProtectedPage, isAdmin } from "./auth.js?v=5";
-import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { initProtectedPage, isAdmin } from "./auth.js?v=6";
+import { csvDelimiter, t } from "./i18n.js?v=6";
+import { formatQuantity, reasonLabel, reasonOptions } from "./inventory.js?v=6";
 import {
+  downloadFile,
   escapeHtml,
   formatCurrency,
   formatDate,
   getErrorMessage,
+  PAGE_SIZE,
   refreshIcons,
   renderEmptyRow,
+  renderPagination,
   setButtonLoading,
   showToast,
-  statusBadge
-} from "./ui.js?v=5";
+  statusBadge,
+  totalCount
+} from "./ui.js?v=6";
 
 const salesHistoryTable = document.getElementById("salesHistoryTable");
 const saleDetailPanel = document.getElementById("saleDetailPanel");
@@ -22,37 +27,40 @@ const reasonFilter = document.getElementById("reasonFilter");
 
 let currentUser = null;
 let selectedSaleId = null;
+let skip = 0;
 
-const reasonLabel = (reason) => STOCK_OUT_REASONS[reason] || reason;
-
-reasonFilter.innerHTML = [
-  `<option value="">All reasons</option>`,
-  ...Object.entries(STOCK_OUT_REASONS).map(
-    ([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`
-  )
-].join("");
-
-function buildSalesQuery() {
+function buildFilters() {
   const params = new URLSearchParams();
   if (dateFromInput.value) params.set("date_from", dateFromInput.value);
   if (dateToInput.value) params.set("date_to", dateToInput.value);
   if (reasonFilter.value) params.set("reason", reasonFilter.value);
-  const query = params.toString();
-  return query ? `?${query}` : "";
+  return params;
 }
 
 async function loadSalesHistory() {
   try {
-    const response = await apiFetch(`/sales/${buildSalesQuery()}`);
+    const params = buildFilters();
+    params.set("skip", skip);
+    params.set("limit", PAGE_SIZE);
+    const response = await apiFetch(`/sales/?${params}`);
     const sales = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sales, "Failed to load history"), "error");
+      showToast(getErrorMessage(sales, t("history.loadFailed")), "error");
       return;
     }
 
+    renderPagination(document.getElementById("salesPager"), {
+      total: totalCount(response),
+      skip,
+      onPage: (newSkip) => {
+        skip = newSkip;
+        loadSalesHistory();
+      }
+    });
+
     if (!sales.length) {
-      renderEmptyRow(salesHistoryTable, 6, "Nothing found.");
+      renderEmptyRow(salesHistoryTable, 6, t("common.nothingFound"));
       return;
     }
 
@@ -68,7 +76,7 @@ async function loadSalesHistory() {
           <td>
             <button class="btn btn-secondary icon-btn" data-action="view" data-id="${sale.id}">
               <i data-lucide="eye"></i>
-              <span>View</span>
+              <span>${escapeHtml(t("action.view"))}</span>
             </button>
           </td>
         </tr>
@@ -79,8 +87,17 @@ async function loadSalesHistory() {
     refreshIcons();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   }
+}
+
+function detailField(labelKey, value) {
+  return `
+    <div>
+      <div class="metric-note">${escapeHtml(t(labelKey))}</div>
+      <div>${value}</div>
+    </div>
+  `;
 }
 
 function renderSaleDetail(sale) {
@@ -94,56 +111,30 @@ function renderSaleDetail(sale) {
       </div>
 
       <div class="sale-detail-meta">
-        <div>
-          <div class="metric-note">Created At</div>
-          <div>${escapeHtml(formatDate(sale.created_at))}</div>
-        </div>
-        <div>
-          <div class="metric-note">Warehouse</div>
-          <div>${escapeHtml(sale.warehouse_name || "-")}</div>
-        </div>
-        <div>
-          <div class="metric-note">User</div>
-          <div>${escapeHtml(sale.cashier_name || "-")}</div>
-        </div>
-        <div>
-          <div class="metric-note">Status</div>
-          <div>${statusBadge(sale.status)}</div>
-        </div>
-        ${
-          sale.cancelled_at
-            ? `<div>
-                <div class="metric-note">Cancelled At</div>
-                <div>${escapeHtml(formatDate(sale.cancelled_at))}</div>
-              </div>`
-            : ""
-        }
+        ${detailField("col.date", escapeHtml(formatDate(sale.created_at)))}
+        ${detailField("col.warehouse", escapeHtml(sale.warehouse_name || "-"))}
+        ${detailField("col.user", escapeHtml(sale.cashier_name || "-"))}
+        ${detailField("col.status", statusBadge(sale.status))}
+        ${sale.cancelled_at ? detailField("history.cancelledAt", escapeHtml(formatDate(sale.cancelled_at))) : ""}
       </div>
 
-      ${
-        sale.note
-          ? `<div>
-              <div class="metric-note">Note</div>
-              <div>${escapeHtml(sale.note)}</div>
-            </div>`
-          : ""
-      }
+      ${sale.note ? detailField("field.note", escapeHtml(sale.note)) : ""}
 
       <div>
-        <div class="metric-note">Total Value</div>
+        <div class="metric-note">${escapeHtml(t("stockOut.totalValue"))}</div>
         <div class="sale-detail-total">${formatCurrency(sale.total_price)}</div>
       </div>
 
       <div>
-        <div class="metric-note sale-detail-items-label">Items</div>
+        <div class="metric-note sale-detail-items-label">${escapeHtml(t("stockOut.items"))}</div>
         <div class="table-wrap">
           <table class="table">
             <thead>
               <tr>
-                <th>Product</th>
-                <th>Qty</th>
-                <th>Unit Price</th>
-                <th>Total</th>
+                <th>${escapeHtml(t("col.product"))}</th>
+                <th>${escapeHtml(t("col.quantity"))}</th>
+                <th>${escapeHtml(t("col.unitPrice"))}</th>
+                <th>${escapeHtml(t("col.total"))}</th>
               </tr>
             </thead>
             <tbody>
@@ -169,7 +160,7 @@ function renderSaleDetail(sale) {
           ? `<div>
               <button class="btn btn-danger icon-btn" data-action="cancel" data-id="${sale.id}">
                 <i data-lucide="undo-2"></i>
-                <span>Cancel &amp; Return to Stock</span>
+                <span>${escapeHtml(t("history.cancelButton"))}</span>
               </button>
             </div>`
           : ""
@@ -186,7 +177,7 @@ async function viewSaleDetail(saleId) {
     const sale = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sale, "Failed to load details"), "error");
+      showToast(getErrorMessage(sale, t("history.loadFailed")), "error");
       return;
     }
 
@@ -194,31 +185,31 @@ async function viewSaleDetail(saleId) {
     renderSaleDetail(sale);
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   }
 }
 
 async function cancelSale(saleId, button) {
-  if (!window.confirm(`Cancel stock out #${saleId}? Its items will be returned to stock.`)) return;
+  if (!window.confirm(t("history.cancelConfirm", { id: saleId }))) return;
 
-  setButtonLoading(button, true, "Cancelling...");
+  setButtonLoading(button, true, t("common.saving"));
 
   try {
     const response = await apiFetch(`/sales/${saleId}/cancel`, { method: "POST" });
     const sale = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(sale, "Failed to cancel"), "error");
+      showToast(getErrorMessage(sale, t("history.cancelFailed")), "error");
       setButtonLoading(button, false);
       return;
     }
 
-    showToast(`Stock out #${sale.id} cancelled`, "success");
+    showToast(t("history.cancelled", { id: sale.id }), "success");
     renderSaleDetail(sale);
     loadSalesHistory();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
     setButtonLoading(button, false);
   }
 }
@@ -234,15 +225,25 @@ document.addEventListener("click", (e) => {
 
 salesFilterForm.addEventListener("submit", (e) => {
   e.preventDefault();
+  skip = 0;
   loadSalesHistory();
 });
 
 salesFilterForm.addEventListener("reset", () => {
+  skip = 0;
   setTimeout(loadSalesHistory, 0);
+});
+
+document.getElementById("exportButton").addEventListener("click", () => {
+  const params = buildFilters();
+  params.delete("reason");
+  params.set("delimiter", csvDelimiter());
+  downloadFile(`/reports/stock-outs.csv?${params}`, "stock-outs.csv");
 });
 
 currentUser = await initProtectedPage();
 
 if (currentUser) {
+  reasonFilter.innerHTML = reasonOptions("", { includeAll: true });
   loadSalesHistory();
 }

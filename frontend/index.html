@@ -3,51 +3,54 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eysto Login</title>
+  <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
-  <link rel="stylesheet" href="assets/css/main.css?v=10" />
-  <link rel="stylesheet" href="assets/css/auth.css?v=5" />
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/auth.css?v=6" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
-<body>
+<body data-title-key="login.title">
   <main class="auth-page">
     <section class="auth-card">
-      <div class="auth-brand">
-        <img src="assets/images/logo.svg" alt="" class="auth-brand-logo" />
+      <div class="auth-top">
+        <div class="auth-brand">
+          <img src="assets/images/logo.svg" alt="" class="auth-brand-logo" />
+        </div>
+        <div class="select-shell auth-language">
+          <select id="languageSelect" class="select" data-i18n-aria-label="common.language"></select>
+        </div>
       </div>
 
       <h1 class="auth-title">Eysto</h1>
-      <p class="auth-subtitle">
-        Simple, reliable stock tracking. Sign in to manage products,
-        stock levels and movements across your warehouses.
-      </p>
+      <p class="auth-subtitle" data-i18n="login.subtitle"></p>
 
       <form id="loginForm" class="auth-form">
         <div class="field">
-          <label for="username">Username</label>
-          <input class="input" type="text" id="username" placeholder="Enter username" autocomplete="username" required />
+          <label for="username" data-i18n="login.username"></label>
+          <input class="input" type="text" id="username" data-i18n-placeholder="login.usernamePlaceholder" autocomplete="username" required />
         </div>
 
         <div class="field">
-          <label for="password">Password</label>
-          <input class="input" type="password" id="password" placeholder="Enter password" autocomplete="current-password" required />
+          <label for="password" data-i18n="login.password"></label>
+          <input class="input" type="password" id="password" data-i18n-placeholder="login.passwordPlaceholder" autocomplete="current-password" required />
         </div>
 
         <button id="loginButton" class="btn btn-primary" type="submit">
           <i data-lucide="log-in"></i>
-          <span>Sign In</span>
+          <span data-i18n="login.signIn"></span>
         </button>
         <p id="message" class="form-message"></p>
       </form>
 
       <div class="auth-footer">
-        Demo accounts: <strong>admin / admin123</strong> · <strong>cashier / cashier123</strong>
+        <span data-i18n="login.demoAccounts"></span>
+        <strong>admin / admin123</strong> · <strong>cashier / cashier123</strong>
       </div>
     </section>
   </main>
 
   <script type="module">
-    import { initLoginPage } from "./assets/js/auth.js?v=5";
+    import { initLoginPage } from "./assets/js/auth.js?v=6";
     initLoginPage();
   </script>
   <script>

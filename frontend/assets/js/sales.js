@@ -1,5 +1,6 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { initProtectedPage } from "./auth.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { initProtectedPage } from "./auth.js?v=6";
+import { t } from "./i18n.js?v=6";
 import {
   formatQuantity,
   isWholeUnit,
@@ -7,9 +8,10 @@ import {
   loadWarehouses,
   loadWarehouseStock,
   quantityStep,
-  STOCK_OUT_REASONS,
+  reasonOptions,
+  unitLabel,
   warehouseOptions
-} from "./inventory.js?v=5";
+} from "./inventory.js?v=6";
 import {
   escapeHtml,
   formatCurrency,
@@ -18,7 +20,7 @@ import {
   renderEmptyState,
   setButtonLoading,
   showToast
-} from "./ui.js?v=5";
+} from "./ui.js?v=6";
 
 const reasonSelect = document.getElementById("reasonSelect");
 const warehouseSelect = document.getElementById("warehouseSelect");
@@ -103,7 +105,7 @@ warehouseSelect.addEventListener("change", () => {
     // Items were checked against the previous warehouse's stock.
     cart = [];
     renderCart();
-    showToast("Item list cleared for the new warehouse", "info");
+    showToast(t("stockOut.listCleared"), "info");
   }
   loadProducts();
 });
@@ -111,9 +113,7 @@ warehouseSelect.addEventListener("change", () => {
 async function loadLookups() {
   [units, warehouses] = await Promise.all([loadUnits(), loadWarehouses()]);
 
-  reasonSelect.innerHTML = Object.entries(STOCK_OUT_REASONS)
-    .map(([value, label]) => `<option value="${value}">${escapeHtml(label)}</option>`)
-    .join("");
+  reasonSelect.innerHTML = reasonOptions();
 
   warehouseSelect.innerHTML = warehouseOptions(warehouses);
   document.querySelectorAll("[data-multi-warehouse]").forEach((element) => {
@@ -130,7 +130,7 @@ async function loadProducts() {
     const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(data, "Failed to load products"), "error");
+      showToast(getErrorMessage(data, t("products.loadFailed")), "error");
       return;
     }
 
@@ -143,24 +143,24 @@ async function loadProducts() {
           .map(
             (product) => `
               <option value="${product.id}">
-                ${escapeHtml(product.name)} — In stock: ${escapeHtml(formatQuantity(warehouseStock[product.id], product.unit))}
+                ${escapeHtml(product.name)} — ${escapeHtml(t("stockOut.inStock", { quantity: formatQuantity(warehouseStock[product.id], product.unit) }))}
               </option>
             `
           )
           .join("")
-      : `<option value="">No products in stock</option>`;
+      : `<option value="">${escapeHtml(t("stockOut.noneInStock"))}</option>`;
 
     renderAvailableProducts(availableProducts);
     updateQuantityUI();
   } catch (error) {
     console.error(error);
-    showToast("Failed to load products", "error");
+    showToast(t("products.loadFailed"), "error");
   }
 }
 
 function renderAvailableProducts(productList) {
   if (!productList.length) {
-    renderEmptyState(availableProductsList, "No products in stock.");
+    renderEmptyState(availableProductsList, t("stockOut.noneInStock"));
     return;
   }
 
@@ -174,7 +174,7 @@ function renderAvailableProducts(productList) {
             </div>
             <div class="product-meta">
               <div class="product-name">${escapeHtml(product.name)}</div>
-              <div class="product-price">${product.price === null ? "No price" : formatCurrency(product.price)}</div>
+              <div class="product-price">${product.price === null ? escapeHtml(t("common.noPrice")) : formatCurrency(product.price)}</div>
             </div>
           </div>
           <div class="stock-pill">${escapeHtml(formatQuantity(warehouseStock[product.id], product.unit))}</div>
@@ -191,17 +191,17 @@ addToCartButton.addEventListener("click", () => {
   const quantity = roundQuantity(currentQuantity());
 
   if (!product || quantity <= 0) {
-    showToast("Select a valid product and quantity", "error");
+    showToast(t("stockOut.selectProduct"), "error");
     return;
   }
 
   if (isWholeUnit(units, product.unit) && !Number.isInteger(quantity)) {
-    showToast(`${product.name} is counted in whole ${product.unit}`, "error");
+    showToast(t("err.wholeNumber", { product: product.name, unit: unitLabel(product.unit) }), "error");
     return;
   }
 
   if (quantity > remainingStock(product)) {
-    showToast("Not enough stock in this warehouse", "error");
+    showToast(t("stockOut.notEnough"), "error");
     return;
   }
 
@@ -222,13 +222,13 @@ addToCartButton.addEventListener("click", () => {
   quantityInput.value = "1";
   renderCart();
   updateQuantityUI();
-  showToast("Item added", "success");
+  showToast(t("stockOut.itemAdded"), "success");
 });
 
 function renderCart() {
   if (!cart.length) {
     cartTable.innerHTML = "";
-    cartEmptyZone.innerHTML = `<div class="empty-state">No items yet.</div>`;
+    cartEmptyZone.innerHTML = `<div class="empty-state">${escapeHtml(t("stockOut.noItems"))}</div>`;
     cartTotal.textContent = formatCurrency(0);
     submitSaleButton.disabled = true;
     return;
@@ -248,7 +248,7 @@ function renderCart() {
           <td>
             <button class="btn btn-danger icon-btn" data-remove-index="${index}">
               <i data-lucide="trash-2"></i>
-              <span>Remove</span>
+              <span>${escapeHtml(t("action.remove"))}</span>
             </button>
           </td>
         </tr>
@@ -274,11 +274,11 @@ cartTable.addEventListener("click", (e) => {
 
 submitSaleButton.addEventListener("click", async () => {
   if (!cart.length) {
-    showToast("Add at least one item", "error");
+    showToast(t("stockOut.addAtLeastOne"), "error");
     return;
   }
 
-  setButtonLoading(submitSaleButton, true, "Saving...");
+  setButtonLoading(submitSaleButton, true, t("common.saving"));
 
   const payload = {
     reason: reasonSelect.value,
@@ -299,19 +299,19 @@ submitSaleButton.addEventListener("click", async () => {
     const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(data, "Stock out failed"), "error");
+      showToast(getErrorMessage(data, t("stockOut.failed")), "error");
       // Stock may have changed since the page loaded.
       loadProducts();
       return;
     }
 
-    showToast(`Stock out #${data.id} recorded`, "success");
+    showToast(t("stockOut.recorded", { id: data.id }), "success");
     cart = [];
     noteInput.value = "";
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
     setButtonLoading(submitSaleButton, false);
     renderCart();
@@ -323,7 +323,7 @@ if (await initProtectedPage()) {
     await loadLookups();
   } catch (error) {
     console.error(error);
-    showToast("Failed to load warehouses", "error");
+    showToast(t("products.lookupsFailed"), "error");
   }
   renderCart();
   loadProducts();

@@ -1,13 +1,9 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { initProtectedPage, isAdmin } from "./auth.js?v=5";
-import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, showToast } from "./ui.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { initProtectedPage } from "./auth.js?v=6";
+import { t } from "./i18n.js?v=6";
+import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, setCurrency, showToast } from "./ui.js?v=6";
 
-const categoryForm = document.getElementById("categoryForm");
-const categoryName = document.getElementById("categoryName");
-const categoriesTable = document.getElementById("categoriesTable");
-const warehouseForm = document.getElementById("warehouseForm");
-const warehouseName = document.getElementById("warehouseName");
-const warehousesTable = document.getElementById("warehousesTable");
+const $ = (id) => document.getElementById(id);
 
 async function request(endpoint, method = "GET", body) {
   const response = await apiFetch(endpoint, {
@@ -16,10 +12,26 @@ async function request(endpoint, method = "GET", body) {
   });
   const data = await readJson(response);
   if (!response.ok) {
-    showToast(getErrorMessage(data, "Request failed"), "error");
+    showToast(getErrorMessage(data, t("common.requestFailed")), "error");
     return null;
   }
   return data;
+}
+
+function rowButton(action, id, icon, labelKey, { danger = false, name = "" } = {}) {
+  return `
+    <button class="btn ${danger ? "btn-danger" : "btn-secondary"} icon-btn" data-action="${action}" data-id="${id}"
+      data-name="${escapeHtml(name)}">
+      <i data-lucide="${icon}"></i>
+      <span>${escapeHtml(t(labelKey))}</span>
+    </button>
+  `;
+}
+
+function activeBadge(isActive) {
+  return `<span class="status-badge ${isActive ? "status-completed" : "status-cancelled"}">${escapeHtml(
+    t(isActive ? "common.active" : "common.inactive")
+  )}</span>`;
 }
 
 // ----- Business -----
@@ -28,13 +40,10 @@ const DEFAULT_LOGO = "assets/images/logo.svg";
 const MAX_LOGO_SIDE = 256;
 const MAX_LOGO_BYTES = 300 * 1024;
 
-const companyForm = document.getElementById("companyForm");
-const companyNameInput = document.getElementById("companyName");
-const companyDescriptionInput = document.getElementById("companyDescription");
-const companyLogoInput = document.getElementById("companyLogoInput");
-const companyLogoPreview = document.getElementById("companyLogoPreview");
-const removeLogoButton = document.getElementById("removeLogoButton");
-const saveCompanyButton = document.getElementById("saveCompanyButton");
+const companyLogoInput = $("companyLogoInput");
+const companyLogoPreview = $("companyLogoPreview");
+const removeLogoButton = $("removeLogoButton");
+const saveCompanyButton = $("saveCompanyButton");
 
 // null = no logo (Eysto's is shown instead); a data URL = the business logo.
 let companyLogo = null;
@@ -78,8 +87,9 @@ async function loadCompany() {
   const company = await request("/company");
   if (!company) return;
 
-  companyNameInput.value = company.name || "";
-  companyDescriptionInput.value = company.description || "";
+  $("companyName").value = company.name || "";
+  $("companyDescription").value = company.description || "";
+  $("companyCurrency").value = company.currency || "USD";
   companyLogo = company.logo;
   showLogo();
 }
@@ -96,14 +106,14 @@ companyLogoInput.addEventListener("change", async () => {
     const dataUrl = await toLogoDataUrl(file);
     // Base64 is ~4/3 of the binary size.
     if (dataUrl.length * 0.75 > MAX_LOGO_BYTES) {
-      showToast("Logo is too large (max 300 KB)", "error");
+      showToast(t("settings.logoTooLarge"), "error");
       return;
     }
     companyLogo = dataUrl;
     showLogo();
   } catch (error) {
     console.error(error);
-    showToast("This image could not be read", "error");
+    showToast(t("settings.logoUnreadable"), "error");
   } finally {
     saveCompanyButton.disabled = false;
   }
@@ -114,18 +124,22 @@ removeLogoButton.addEventListener("click", () => {
   showLogo();
 });
 
-companyForm.addEventListener("submit", async (e) => {
+$("companyForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   saveCompanyButton.disabled = true;
 
   const saved = await request("/company", "PATCH", {
-    name: companyNameInput.value,
-    description: companyDescriptionInput.value,
+    name: $("companyName").value,
+    description: $("companyDescription").value,
+    currency: $("companyCurrency").value,
     logo: companyLogo
   });
 
   saveCompanyButton.disabled = false;
-  if (saved) showToast("Business details saved", "success");
+  if (saved) {
+    setCurrency(saved.currency);
+    showToast(t("settings.businessSaved"), "success");
+  }
 });
 
 // ----- Categories -----
@@ -135,11 +149,11 @@ async function loadCategories() {
   if (!categories) return;
 
   if (!categories.length) {
-    renderEmptyRow(categoriesTable, 3, "No categories yet.");
+    renderEmptyRow($("categoriesTable"), 3, t("settings.noCategories"));
     return;
   }
 
-  categoriesTable.innerHTML = categories
+  $("categoriesTable").innerHTML = categories
     .map(
       (category) => `
         <tr>
@@ -147,16 +161,8 @@ async function loadCategories() {
           <td>${escapeHtml(category.product_count)}</td>
           <td>
             <div class="row-actions">
-              <button class="btn btn-secondary icon-btn" data-action="rename-category" data-id="${category.id}"
-                data-name="${escapeHtml(category.name)}">
-                <i data-lucide="square-pen"></i>
-                <span>Rename</span>
-              </button>
-              <button class="btn btn-danger icon-btn" data-action="delete-category" data-id="${category.id}"
-                data-name="${escapeHtml(category.name)}">
-                <i data-lucide="trash-2"></i>
-                <span>Delete</span>
-              </button>
+              ${rowButton("rename-category", category.id, "square-pen", "action.rename", { name: category.name })}
+              ${rowButton("delete-category", category.id, "trash-2", "action.delete", { danger: true, name: category.name })}
             </div>
           </td>
         </tr>
@@ -167,13 +173,13 @@ async function loadCategories() {
   refreshIcons();
 }
 
-categoryForm.addEventListener("submit", async (e) => {
+$("categoryForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const created = await request("/categories", "POST", { name: categoryName.value });
+  const created = await request("/categories", "POST", { name: $("categoryName").value });
   if (!created) return;
 
-  showToast("Category added", "success");
-  categoryForm.reset();
+  showToast(t("settings.categoryAdded"), "success");
+  $("categoryForm").reset();
   loadCategories();
 });
 
@@ -183,42 +189,73 @@ async function loadWarehouses() {
   const warehouses = await request("/warehouses?include_inactive=true");
   if (!warehouses) return;
 
-  warehousesTable.innerHTML = warehouses
+  $("warehousesTable").innerHTML = warehouses
     .map(
       (warehouse) => `
         <tr>
           <td>
             <strong>${escapeHtml(warehouse.name)}</strong>
-            ${warehouse.is_default ? `<span class="status-badge status-completed">default</span>` : ""}
+            ${warehouse.is_default ? `<span class="status-badge status-completed">${escapeHtml(t("common.default"))}</span>` : ""}
           </td>
           <td>${escapeHtml(warehouse.product_count)}</td>
-          <td>${warehouse.is_active ? "Active" : "Inactive"}</td>
+          <td>${activeBadge(warehouse.is_active)}</td>
           <td>
             <div class="row-actions">
-              <button class="btn btn-secondary icon-btn" data-action="rename-warehouse" data-id="${warehouse.id}"
-                data-name="${escapeHtml(warehouse.name)}">
-                <i data-lucide="square-pen"></i>
-                <span>Rename</span>
-              </button>
+              ${rowButton("rename-warehouse", warehouse.id, "square-pen", "action.rename", { name: warehouse.name })}
               ${
                 warehouse.is_active && !warehouse.is_default
-                  ? `<button class="btn btn-secondary icon-btn" data-action="default-warehouse" data-id="${warehouse.id}">
-                      <i data-lucide="star"></i>
-                      <span>Make Default</span>
-                    </button>
-                    <button class="btn btn-danger icon-btn" data-action="deactivate-warehouse" data-id="${warehouse.id}">
-                      <i data-lucide="archive"></i>
-                      <span>Deactivate</span>
-                    </button>`
+                  ? rowButton("default-warehouse", warehouse.id, "star", "settings.makeDefault") +
+                    rowButton("deactivate-warehouse", warehouse.id, "archive", "users.deactivate", { danger: true })
                   : ""
               }
+              ${!warehouse.is_active ? rowButton("activate-warehouse", warehouse.id, "archive-restore", "users.activate") : ""}
+            </div>
+          </td>
+        </tr>
+      `
+    )
+    .join("");
+
+  refreshIcons();
+}
+
+$("warehouseForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const created = await request("/warehouses", "POST", { name: $("warehouseName").value });
+  if (!created) return;
+
+  showToast(t("settings.warehouseAdded"), "success");
+  $("warehouseForm").reset();
+  loadWarehouses();
+});
+
+// ----- Suppliers -----
+
+async function loadSuppliers() {
+  const suppliers = await request("/suppliers?include_inactive=true");
+  if (!suppliers) return;
+
+  if (!suppliers.length) {
+    renderEmptyRow($("suppliersTable"), 6, t("settings.noSuppliers"));
+    return;
+  }
+
+  $("suppliersTable").innerHTML = suppliers
+    .map(
+      (supplier) => `
+        <tr>
+          <td><strong>${escapeHtml(supplier.name)}</strong></td>
+          <td>${escapeHtml(supplier.contact_name || "-")}</td>
+          <td>${escapeHtml(supplier.phone || "-")}</td>
+          <td>${escapeHtml(supplier.email || "-")}</td>
+          <td>${activeBadge(supplier.is_active)}</td>
+          <td>
+            <div class="row-actions">
+              ${rowButton("rename-supplier", supplier.id, "square-pen", "action.rename", { name: supplier.name })}
               ${
-                !warehouse.is_active
-                  ? `<button class="btn btn-secondary icon-btn" data-action="activate-warehouse" data-id="${warehouse.id}">
-                      <i data-lucide="archive-restore"></i>
-                      <span>Activate</span>
-                    </button>`
-                  : ""
+                supplier.is_active
+                  ? rowButton("deactivate-supplier", supplier.id, "archive", "users.deactivate", { danger: true })
+                  : rowButton("activate-supplier", supplier.id, "archive-restore", "users.activate")
               }
             </div>
           </td>
@@ -230,58 +267,55 @@ async function loadWarehouses() {
   refreshIcons();
 }
 
-warehouseForm.addEventListener("submit", async (e) => {
+$("supplierForm").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const created = await request("/warehouses", "POST", { name: warehouseName.value });
+  const created = await request("/suppliers", "POST", {
+    name: $("supplierName").value,
+    contact_name: $("supplierContact").value,
+    phone: $("supplierPhone").value,
+    email: $("supplierEmail").value
+  });
   if (!created) return;
 
-  showToast("Warehouse added", "success");
-  warehouseForm.reset();
-  loadWarehouses();
+  showToast(t("settings.supplierAdded"), "success");
+  $("supplierForm").reset();
+  loadSuppliers();
 });
 
 // ----- Row actions -----
 
-async function renameCategory(id, currentName) {
-  const name = window.prompt("New category name", currentName);
+async function rename(endpoint, currentName, reload) {
+  const name = window.prompt(t("settings.newName"), currentName);
   if (!name || name.trim() === currentName) return;
-  if (await request(`/categories/${id}`, "PATCH", { name })) {
-    showToast("Category renamed", "success");
-    loadCategories();
+  if (await request(endpoint, "PATCH", { name })) {
+    showToast(t("settings.renamed"), "success");
+    reload();
   }
 }
 
-async function deleteCategory(id, name) {
-  if (!window.confirm(`Delete category "${name}"? Its products will become uncategorized.`)) return;
-  if (await request(`/categories/${id}`, "DELETE")) {
-    showToast("Category deleted", "success");
-    loadCategories();
+async function update(endpoint, changes, messageKey, reload) {
+  if (await request(endpoint, "PATCH", changes)) {
+    showToast(t(messageKey), "success");
+    reload();
   }
-}
-
-async function updateWarehouse(id, changes, message) {
-  if (await request(`/warehouses/${id}`, "PATCH", changes)) {
-    showToast(message, "success");
-    loadWarehouses();
-  }
-}
-
-async function renameWarehouse(id, currentName) {
-  const name = window.prompt("New warehouse name", currentName);
-  if (!name || name.trim() === currentName) return;
-  updateWarehouse(id, { name }, "Warehouse renamed");
 }
 
 const actions = {
-  "rename-category": (button) => renameCategory(Number(button.dataset.id), button.dataset.name),
-  "delete-category": (button) => deleteCategory(Number(button.dataset.id), button.dataset.name),
-  "rename-warehouse": (button) => renameWarehouse(Number(button.dataset.id), button.dataset.name),
-  "default-warehouse": (button) =>
-    updateWarehouse(Number(button.dataset.id), { is_default: true }, "Default warehouse changed"),
-  "deactivate-warehouse": (button) =>
-    updateWarehouse(Number(button.dataset.id), { is_active: false }, "Warehouse deactivated"),
-  "activate-warehouse": (button) =>
-    updateWarehouse(Number(button.dataset.id), { is_active: true }, "Warehouse activated")
+  "rename-category": (id, name) => rename(`/categories/${id}`, name, loadCategories),
+  "delete-category": async (id, name) => {
+    if (!window.confirm(t("settings.deleteCategoryConfirm", { name }))) return;
+    if (await request(`/categories/${id}`, "DELETE")) {
+      showToast(t("settings.categoryDeleted"), "success");
+      loadCategories();
+    }
+  },
+  "rename-warehouse": (id, name) => rename(`/warehouses/${id}`, name, loadWarehouses),
+  "default-warehouse": (id) => update(`/warehouses/${id}`, { is_default: true }, "settings.defaultChanged", loadWarehouses),
+  "deactivate-warehouse": (id) => update(`/warehouses/${id}`, { is_active: false }, "users.deactivated", loadWarehouses),
+  "activate-warehouse": (id) => update(`/warehouses/${id}`, { is_active: true }, "users.activated", loadWarehouses),
+  "rename-supplier": (id, name) => rename(`/suppliers/${id}`, name, loadSuppliers),
+  "deactivate-supplier": (id) => update(`/suppliers/${id}`, { is_active: false }, "users.deactivated", loadSuppliers),
+  "activate-supplier": (id) => update(`/suppliers/${id}`, { is_active: true }, "users.activated", loadSuppliers)
 };
 
 document.addEventListener("click", (e) => {
@@ -289,15 +323,12 @@ document.addEventListener("click", (e) => {
   if (!button) return;
 
   const handler = actions[button.dataset.action];
-  if (handler) handler(button);
+  if (handler) handler(Number(button.dataset.id), button.dataset.name);
 });
 
-const currentUser = await initProtectedPage();
-
-if (currentUser && !isAdmin(currentUser)) {
-  window.location.replace("dashboard.html");
-} else if (currentUser) {
+if (await initProtectedPage({ adminOnly: true })) {
   loadCompany();
   loadCategories();
   loadWarehouses();
+  loadSuppliers();
 }

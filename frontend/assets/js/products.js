@@ -1,88 +1,92 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { initProtectedPage, isAdmin } from "./auth.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { initProtectedPage, isAdmin } from "./auth.js?v=6";
+import { csvDelimiter, t } from "./i18n.js?v=6";
 import {
   categoryOptions,
   formatQuantity,
   loadCategories,
+  loadSuppliers,
   loadUnits,
   loadWarehouses,
-  MOVEMENT_LABELS,
+  movementLabel,
   optionalNumber,
   quantityStep,
+  supplierOptions,
   unitOptions,
   warehouseOptions
-} from "./inventory.js?v=5";
+} from "./inventory.js?v=6";
 import {
+  downloadFile,
   escapeHtml,
   formatCurrency,
   formatDate,
   getErrorMessage,
+  PAGE_SIZE,
   refreshIcons,
   renderEmptyRow,
+  renderPagination,
   setButtonLoading,
-  showToast
-} from "./ui.js?v=5";
+  showToast,
+  totalCount
+} from "./ui.js?v=6";
 
-const productsTable = document.getElementById("productsTable");
-const archivedProductsTable = document.getElementById("archivedProductsTable");
-const productForm = document.getElementById("productForm");
-const addProductButton = document.getElementById("addProductButton");
-const productSearch = document.getElementById("productSearch");
-const categoryFilter = document.getElementById("categoryFilter");
-const lowStockFilter = document.getElementById("lowStockFilter");
-const sortSelect = document.getElementById("sortSelect");
+const $ = (id) => document.getElementById(id);
 
-const formCategory = document.getElementById("category");
-const formUnit = document.getElementById("unit");
-const formWarehouse = document.getElementById("warehouse");
-const formStock = document.getElementById("stock_quantity");
-const formMinStock = document.getElementById("min_stock");
+const productsTable = $("productsTable");
+const archivedProductsTable = $("archivedProductsTable");
+const productForm = $("productForm");
+const addProductButton = $("addProductButton");
+const productSearch = $("productSearch");
+const categoryFilter = $("categoryFilter");
+const lowStockFilter = $("lowStockFilter");
+const sortSelect = $("sortSelect");
 
-const stockModalOverlay = document.getElementById("stockModalOverlay");
-const stockModalTitle = document.getElementById("stockModalTitle");
-const stockModalSubtitle = document.getElementById("stockModalSubtitle");
-const stockModalQuantity = document.getElementById("stockModalQuantity");
-const stockModalWarehouse = document.getElementById("stockModalWarehouse");
-const stockModalNote = document.getElementById("stockModalNote");
-const confirmStockModalBtn = document.getElementById("confirmStockModalBtn");
+const formCategory = $("category");
+const formUnit = $("unit");
+const formWarehouse = $("warehouse");
+const formStock = $("stock_quantity");
+const formMinStock = $("min_stock");
 
-const transferModalOverlay = document.getElementById("transferModalOverlay");
-const transferModalSubtitle = document.getElementById("transferModalSubtitle");
-const transferFrom = document.getElementById("transferFrom");
-const transferTo = document.getElementById("transferTo");
-const transferQuantity = document.getElementById("transferQuantity");
-const transferNote = document.getElementById("transferNote");
-const transferLevels = document.getElementById("transferLevels");
-const confirmTransferBtn = document.getElementById("confirmTransferBtn");
+const stockModalOverlay = $("stockModalOverlay");
+const stockModalQuantity = $("stockModalQuantity");
+const stockModalWarehouse = $("stockModalWarehouse");
+const stockModalSupplier = $("stockModalSupplier");
+const stockModalUnitCost = $("stockModalUnitCost");
+const stockModalDocument = $("stockModalDocument");
+const stockModalNote = $("stockModalNote");
+const confirmStockModalBtn = $("confirmStockModalBtn");
 
-const historyModalOverlay = document.getElementById("historyModalOverlay");
-const historyModalSubtitle = document.getElementById("historyModalSubtitle");
-const historyLevels = document.getElementById("historyLevels");
-const historyTable = document.getElementById("historyTable");
+const transferModalOverlay = $("transferModalOverlay");
+const transferFrom = $("transferFrom");
+const transferTo = $("transferTo");
+const transferQuantity = $("transferQuantity");
+const transferNote = $("transferNote");
+const confirmTransferBtn = $("confirmTransferBtn");
 
-const editModalOverlay = document.getElementById("editModalOverlay");
-const editName = document.getElementById("editName");
-const editBarcode = document.getElementById("editBarcode");
-const editCategory = document.getElementById("editCategory");
-const editUnit = document.getElementById("editUnit");
-const editMinStock = document.getElementById("editMinStock");
-const editPrice = document.getElementById("editPrice");
-const saveEditModalBtn = document.getElementById("saveEditModalBtn");
+const historyModalOverlay = $("historyModalOverlay");
+const historyTable = $("historyTable");
 
-const deleteModalOverlay = document.getElementById("deleteModalOverlay");
-const confirmDeleteModalBtn = document.getElementById("confirmDeleteModalBtn");
-const deleteModalText = document.getElementById("deleteModalText");
+const editModalOverlay = $("editModalOverlay");
+const deleteModalOverlay = $("deleteModalOverlay");
+const importModalOverlay = $("importModalOverlay");
+const importFile = $("importFile");
+const importResult = $("importResult");
+const confirmImportBtn = $("confirmImportBtn");
 
 let currentUser = null;
 let products = [];
 let units = [];
 let categories = [];
 let warehouses = [];
+let suppliers = [];
+let productsSkip = 0;
+let archivedSkip = 0;
 let currentStockProduct = null;
 let currentStockAction = null;
 let currentTransferProduct = null;
 let currentEditProductId = null;
 let currentDeleteProductId = null;
+let importCsvText = null;
 
 const hasManyWarehouses = () => warehouses.length > 1;
 
@@ -98,17 +102,18 @@ function findProduct(id) {
 // ----- Lookups -----
 
 async function loadLookups() {
-  [units, categories, warehouses] = await Promise.all([loadUnits(), loadCategories(), loadWarehouses()]);
+  [units, categories, warehouses, suppliers] = await Promise.all([
+    loadUnits(),
+    loadCategories(),
+    loadWarehouses(),
+    loadSuppliers()
+  ]);
 
   formUnit.innerHTML = unitOptions(units);
-  editUnit.innerHTML = unitOptions(units);
+  $("editUnit").innerHTML = unitOptions(units);
   formCategory.innerHTML = categoryOptions(categories);
-  editCategory.innerHTML = categoryOptions(categories);
-  categoryFilter.innerHTML = categoryOptions(categories, null, "All categories");
-
-  const options = warehouseOptions(warehouses);
-  formWarehouse.innerHTML = options;
-  stockModalWarehouse.innerHTML = options;
+  categoryFilter.innerHTML = categoryOptions(categories, null, t("common.allCategories"));
+  formWarehouse.innerHTML = warehouseOptions(warehouses);
 
   document.querySelectorAll("[data-multi-warehouse]").forEach((element) => {
     element.hidden = !hasManyWarehouses();
@@ -124,21 +129,20 @@ function syncFormSteps() {
 }
 
 formUnit.addEventListener("change", syncFormSteps);
-editUnit.addEventListener("change", () => {
-  editMinStock.step = quantityStep(units, editUnit.value);
+$("editUnit").addEventListener("change", () => {
+  $("editMinStock").step = quantityStep(units, $("editUnit").value);
 });
 
 // ----- Product list -----
 
 function buildProductQuery() {
-  const params = new URLSearchParams();
+  const params = new URLSearchParams({ skip: productsSkip, limit: PAGE_SIZE });
   const search = productSearch.value.trim();
   if (search) params.set("search", search);
   if (categoryFilter.value) params.set("category_id", categoryFilter.value);
   if (lowStockFilter.checked) params.set("low_stock", "true");
   if (sortSelect.value !== "id") params.set("sort", sortSelect.value);
-  const query = params.toString();
-  return query ? `?${query}` : "";
+  return `?${params}`;
 }
 
 async function loadProducts() {
@@ -147,21 +151,35 @@ async function loadProducts() {
     const data = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(data, "Failed to load products"), "error");
+      showToast(getErrorMessage(data, t("products.loadFailed")), "error");
       return;
     }
 
     products = data;
     renderProducts();
+    renderPagination($("productsPager"), {
+      total: totalCount(response),
+      skip: productsSkip,
+      onPage: (skip) => {
+        productsSkip = skip;
+        loadProducts();
+      }
+    });
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   }
+}
+
+// Filters change the result set, so go back to the first page.
+function reloadFromFirstPage() {
+  productsSkip = 0;
+  loadProducts();
 }
 
 function renderProducts() {
   if (!products.length) {
-    renderEmptyRow(productsTable, 7, "No products found.");
+    renderEmptyRow(productsTable, 7, t("products.empty"));
     return;
   }
 
@@ -175,7 +193,9 @@ function renderProducts() {
           <td>${escapeHtml(product.barcode)}</td>
           <td>${product.price === null ? "-" : formatCurrency(product.price)}</td>
           <td class="${product.is_low_stock ? "stock-low" : "stock-good"}" title="${
-            product.min_stock === null ? "" : `Minimum: ${escapeHtml(formatQuantity(product.min_stock, product.unit))}`
+            product.min_stock === null
+              ? ""
+              : escapeHtml(t("products.minimumTitle", { quantity: formatQuantity(product.min_stock, product.unit) }))
           }">
             ${escapeHtml(formatQuantity(product.stock_quantity, product.unit))}
           </td>
@@ -188,61 +208,54 @@ function renderProducts() {
   refreshIcons();
 }
 
-function renderProductActions(productId) {
-  const history = `
-    <button class="btn btn-secondary icon-btn" data-action="history" data-id="${productId}">
-      <i data-lucide="history"></i>
-      <span>History</span>
+function actionButton(action, id, icon, labelKey, danger = false) {
+  return `
+    <button class="btn ${danger ? "btn-danger" : "btn-secondary"} icon-btn" data-action="${action}" data-id="${id}">
+      <i data-lucide="${icon}"></i>
+      <span>${escapeHtml(t(labelKey))}</span>
     </button>
   `;
+}
 
+function renderProductActions(productId) {
+  const history = actionButton("history", productId, "history", "action.history");
   if (!isAdmin(currentUser)) {
     return `<div class="row-actions">${history}</div>`;
   }
 
   return `
     <div class="row-actions">
-      <button class="btn btn-secondary icon-btn" data-action="edit" data-id="${productId}">
-        <i data-lucide="square-pen"></i>
-        <span>Edit</span>
-      </button>
-      <button class="btn btn-secondary icon-btn" data-action="increase" data-id="${productId}">
-        <i data-lucide="package-plus"></i>
-        <span>Stock In</span>
-      </button>
-      <button class="btn btn-secondary icon-btn" data-action="decrease" data-id="${productId}">
-        <i data-lucide="package-minus"></i>
-        <span>Stock Out</span>
-      </button>
-      ${
-        hasManyWarehouses()
-          ? `<button class="btn btn-secondary icon-btn" data-action="transfer" data-id="${productId}">
-              <i data-lucide="arrow-left-right"></i>
-              <span>Transfer</span>
-            </button>`
-          : ""
-      }
+      ${actionButton("edit", productId, "square-pen", "action.edit")}
+      ${actionButton("increase", productId, "package-plus", "action.stockIn")}
+      ${actionButton("decrease", productId, "package-minus", "action.stockOut")}
+      ${hasManyWarehouses() ? actionButton("transfer", productId, "arrow-left-right", "action.transfer") : ""}
       ${history}
-      <button class="btn btn-danger icon-btn" data-action="archive" data-id="${productId}">
-        <i data-lucide="archive"></i>
-        <span>Archive</span>
-      </button>
+      ${actionButton("archive", productId, "archive", "action.archive", true)}
     </div>
   `;
 }
 
 async function loadArchivedProducts() {
   try {
-    const response = await apiFetch("/products/?status=archived");
+    const response = await apiFetch(`/products/?status=archived&skip=${archivedSkip}&limit=${PAGE_SIZE}`);
     const archived = await readJson(response);
 
     if (!response.ok) {
-      showToast(getErrorMessage(archived, "Failed to load archived products"), "error");
+      showToast(getErrorMessage(archived, t("products.loadFailed")), "error");
       return;
     }
 
+    renderPagination($("archivedPager"), {
+      total: totalCount(response),
+      skip: archivedSkip,
+      onPage: (skip) => {
+        archivedSkip = skip;
+        loadArchivedProducts();
+      }
+    });
+
     if (!archived.length) {
-      renderEmptyRow(archivedProductsTable, 4, "No archived products.");
+      renderEmptyRow(archivedProductsTable, 4, t("products.noArchived"));
       return;
     }
 
@@ -253,12 +266,7 @@ async function loadArchivedProducts() {
             <td>${escapeHtml(product.id)}</td>
             <td><strong>${escapeHtml(product.name)}</strong></td>
             <td>${escapeHtml(product.barcode)}</td>
-            <td>
-              <button class="btn btn-secondary icon-btn" data-action="restore" data-id="${product.id}">
-                <i data-lucide="archive-restore"></i>
-                <span>Restore</span>
-              </button>
-            </td>
+            <td>${actionButton("restore", product.id, "archive-restore", "action.restore")}</td>
           </tr>
         `
       )
@@ -267,7 +275,7 @@ async function loadArchivedProducts() {
     refreshIcons();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   }
 }
 
@@ -311,7 +319,7 @@ function renderLevels(container, levels, unit) {
           `
         )
         .join("")
-    : `<div class="metric-note">No stock in any warehouse.</div>`;
+    : `<div class="metric-note">${escapeHtml(t("transfer.noStock"))}</div>`;
 }
 
 // ----- Add product -----
@@ -320,30 +328,31 @@ productForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const payload = {
-    name: document.getElementById("name").value.trim(),
-    barcode: document.getElementById("barcode").value.trim(),
+    name: $("name").value.trim(),
+    barcode: $("barcode").value.trim(),
     category_id: optionalNumber(formCategory.value),
     unit: formUnit.value,
     stock_quantity: Number(formStock.value || 0),
     min_stock: optionalNumber(formMinStock.value),
-    price: optionalNumber(document.getElementById("price").value)
+    price: optionalNumber($("price").value),
+    cost_price: optionalNumber($("cost_price").value)
   };
   if (hasManyWarehouses()) payload.warehouse_id = Number(formWarehouse.value);
 
-  setButtonLoading(addProductButton, true, "Adding...");
+  setButtonLoading(addProductButton, true, t("common.saving"));
 
   try {
-    const created = await submitJson("/products/", "POST", payload, "Failed to add product");
+    const created = await submitJson("/products/", "POST", payload, t("products.addFailed"));
     if (!created) return;
 
-    showToast("Product added", "success");
+    showToast(t("products.added"), "success");
     productForm.reset();
     formUnit.value = "pcs";
     syncFormSteps();
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
     setButtonLoading(addProductButton, false);
   }
@@ -352,17 +361,17 @@ productForm.addEventListener("submit", async (e) => {
 let searchTimer = null;
 productSearch.addEventListener("input", () => {
   clearTimeout(searchTimer);
-  searchTimer = setTimeout(loadProducts, 250);
+  searchTimer = setTimeout(reloadFromFirstPage, 250);
 });
-categoryFilter.addEventListener("change", loadProducts);
-lowStockFilter.addEventListener("change", loadProducts);
-sortSelect.addEventListener("change", loadProducts);
+categoryFilter.addEventListener("change", reloadFromFirstPage);
+lowStockFilter.addEventListener("change", reloadFromFirstPage);
+sortSelect.addEventListener("change", reloadFromFirstPage);
 
 // ----- Modals -----
 
 function openModal(overlay) {
   overlay.classList.add("show");
-  const firstInput = overlay.querySelector("input");
+  const firstInput = overlay.querySelector("input:not([type=file])");
   if (firstInput) firstInput.focus();
 }
 
@@ -376,12 +385,24 @@ function openStockModal(productId, action) {
 
   currentStockProduct = product;
   currentStockAction = action;
+  const stockIn = action === "increase";
+
   stockModalQuantity.value = "";
   stockModalQuantity.step = quantityStep(units, product.unit);
   stockModalNote.value = "";
+  stockModalUnitCost.value = product.cost_price ?? "";
+  stockModalDocument.value = "";
   stockModalWarehouse.innerHTML = warehouseOptions(warehouses);
-  stockModalTitle.textContent = action === "increase" ? "Stock In" : "Stock Out";
-  stockModalSubtitle.textContent = `${product.name} · current: ${formatQuantity(product.stock_quantity, product.unit)}`;
+  stockModalSupplier.innerHTML = supplierOptions(suppliers);
+  stockModalOverlay.querySelectorAll("[data-stock-in-only]").forEach((field) => {
+    field.hidden = !stockIn;
+  });
+
+  $("stockModalTitle").textContent = t(stockIn ? "action.stockIn" : "action.stockOut");
+  $("stockModalSubtitle").textContent = t("stock.current", {
+    product: product.name,
+    quantity: formatQuantity(product.stock_quantity, product.unit)
+  });
   openModal(stockModalOverlay);
 }
 
@@ -390,7 +411,7 @@ async function openTransferModal(productId) {
   if (!product) return;
 
   currentTransferProduct = product;
-  transferModalSubtitle.textContent = product.name;
+  $("transferModalSubtitle").textContent = product.name;
   transferQuantity.value = "";
   transferQuantity.step = quantityStep(units, product.unit);
   transferNote.value = "";
@@ -402,17 +423,29 @@ async function openTransferModal(productId) {
     warehouses,
     warehouses.find((w) => w.id !== Number(transferFrom.value))?.id
   );
-  renderLevels(transferLevels, levels, product.unit);
+  renderLevels($("transferLevels"), levels, product.unit);
   openModal(transferModalOverlay);
+}
+
+function movementDetails(movement) {
+  const parts = [];
+  if (movement.supplier_name) parts.push(movement.supplier_name);
+  if (movement.document_no) parts.push(`#${movement.document_no}`);
+  if (movement.unit_cost !== null) parts.push(t("history.unitCost", { cost: formatCurrency(movement.unit_cost) }));
+  if (movement.note) parts.push(movement.note);
+  return parts.join(" · ");
 }
 
 async function openHistoryModal(productId) {
   const product = findProduct(productId);
   if (!product) return;
 
-  historyModalSubtitle.textContent = `${product.name} · ${formatQuantity(product.stock_quantity, product.unit)} in stock`;
-  renderEmptyRow(historyTable, 7, "Loading...");
-  historyLevels.innerHTML = "";
+  $("historyModalSubtitle").textContent = t("history.subtitle", {
+    product: product.name,
+    quantity: formatQuantity(product.stock_quantity, product.unit)
+  });
+  renderEmptyRow(historyTable, 7, t("common.loading"));
+  $("historyLevels").innerHTML = "";
   openModal(historyModalOverlay);
 
   try {
@@ -423,14 +456,14 @@ async function openHistoryModal(productId) {
     const movements = await readJson(response);
 
     if (!response.ok) {
-      renderEmptyRow(historyTable, 7, getErrorMessage(movements, "Failed to load history"));
+      renderEmptyRow(historyTable, 7, getErrorMessage(movements, t("history.loadFailed")));
       return;
     }
 
-    renderLevels(historyLevels, levels, product.unit);
+    renderLevels($("historyLevels"), levels, product.unit);
 
     if (!movements.length) {
-      renderEmptyRow(historyTable, 7, "No stock movements yet.");
+      renderEmptyRow(historyTable, 7, t("history.empty"));
       return;
     }
 
@@ -439,21 +472,21 @@ async function openHistoryModal(productId) {
         (movement) => `
           <tr>
             <td>${escapeHtml(formatDate(movement.created_at))}</td>
-            <td>${escapeHtml(MOVEMENT_LABELS[movement.reason] || movement.reason)}</td>
+            <td>${escapeHtml(movementLabel(movement.reason))}</td>
             <td>${escapeHtml(movement.warehouse_name || "-")}</td>
             <td class="${movement.change < 0 ? "stock-low" : "stock-good"}">
               ${movement.change > 0 ? "+" : ""}${escapeHtml(formatQuantity(movement.change, product.unit))}
             </td>
             <td>${escapeHtml(formatQuantity(movement.quantity_after, product.unit))}</td>
             <td>${escapeHtml(movement.username || "-")}</td>
-            <td>${escapeHtml(movement.note || "")}</td>
+            <td>${escapeHtml(movementDetails(movement))}</td>
           </tr>
         `
       )
       .join("");
   } catch (error) {
     console.error(error);
-    renderEmptyRow(historyTable, 7, "Request failed");
+    renderEmptyRow(historyTable, 7, t("common.requestFailed"));
   }
 }
 
@@ -462,13 +495,14 @@ function openEditModal(productId) {
   if (!product) return;
 
   currentEditProductId = productId;
-  editName.value = product.name;
-  editBarcode.value = product.barcode;
-  editCategory.innerHTML = categoryOptions(categories, product.category_id);
-  editUnit.innerHTML = unitOptions(units, product.unit);
-  editMinStock.value = product.min_stock ?? "";
-  editMinStock.step = quantityStep(units, product.unit);
-  editPrice.value = product.price ?? "";
+  $("editName").value = product.name;
+  $("editBarcode").value = product.barcode;
+  $("editCategory").innerHTML = categoryOptions(categories, product.category_id);
+  $("editUnit").innerHTML = unitOptions(units, product.unit);
+  $("editMinStock").value = product.min_stock ?? "";
+  $("editMinStock").step = quantityStep(units, product.unit);
+  $("editPrice").value = product.price ?? "";
+  $("editCostPrice").value = product.cost_price ?? "";
   openModal(editModalOverlay);
 }
 
@@ -477,20 +511,20 @@ function openDeleteModal(productId) {
   if (!product) return;
 
   currentDeleteProductId = productId;
-  deleteModalText.textContent = `Are you sure you want to archive "${product.name}"?`;
+  $("deleteModalText").textContent = t("archive.question", { product: product.name });
   openModal(deleteModalOverlay);
 }
 
 async function restoreProduct(productId) {
   try {
-    const restored = await submitJson(`/products/${productId}/restore`, "POST", undefined, "Restore failed");
+    const restored = await submitJson(`/products/${productId}/restore`, "POST", undefined, t("products.restoreFailed"));
     if (!restored) return;
 
-    showToast("Product restored", "success");
+    showToast(t("products.restored"), "success");
     reloadAll();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   }
 }
 
@@ -516,30 +550,35 @@ confirmStockModalBtn.addEventListener("click", async () => {
   const quantity = Number(stockModalQuantity.value);
 
   if (!quantity || quantity <= 0) {
-    showToast("Enter a valid quantity", "error");
+    showToast(t("common.invalidQuantity"), "error");
     return;
   }
 
   const payload = { quantity, note: stockModalNote.value };
   if (hasManyWarehouses()) payload.warehouse_id = Number(stockModalWarehouse.value);
+  if (currentStockAction === "increase") {
+    payload.supplier_id = optionalNumber(stockModalSupplier.value);
+    payload.unit_cost = optionalNumber(stockModalUnitCost.value);
+    payload.document_no = stockModalDocument.value;
+  }
 
-  setButtonLoading(confirmStockModalBtn, true, "Saving...");
+  setButtonLoading(confirmStockModalBtn, true, t("common.saving"));
 
   try {
     const updated = await submitJson(
       `/products/${currentStockProduct.id}/${currentStockAction}-stock`,
       "POST",
       payload,
-      "Stock update failed"
+      t("stock.updateFailed")
     );
     if (!updated) return;
 
-    showToast("Stock updated", "success");
+    showToast(t("stock.updated"), "success");
     closeModal(stockModalOverlay);
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
     setButtonLoading(confirmStockModalBtn, false);
   }
@@ -549,11 +588,11 @@ confirmTransferBtn.addEventListener("click", async () => {
   const quantity = Number(transferQuantity.value);
 
   if (!quantity || quantity <= 0) {
-    showToast("Enter a valid quantity", "error");
+    showToast(t("common.invalidQuantity"), "error");
     return;
   }
 
-  setButtonLoading(confirmTransferBtn, true, "Moving...");
+  setButtonLoading(confirmTransferBtn, true, t("common.saving"));
 
   try {
     const updated = await submitJson(
@@ -565,67 +604,166 @@ confirmTransferBtn.addEventListener("click", async () => {
         quantity,
         note: transferNote.value
       },
-      "Transfer failed"
+      t("transfer.failed")
     );
     if (!updated) return;
 
-    showToast("Stock transferred", "success");
+    showToast(t("transfer.done"), "success");
     closeModal(transferModalOverlay);
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
     setButtonLoading(confirmTransferBtn, false);
   }
 });
 
-saveEditModalBtn.addEventListener("click", async () => {
+$("saveEditModalBtn").addEventListener("click", async (e) => {
+  const button = e.currentTarget;
   const payload = {
-    name: editName.value.trim(),
-    barcode: editBarcode.value.trim(),
-    category_id: optionalNumber(editCategory.value),
-    unit: editUnit.value,
-    min_stock: optionalNumber(editMinStock.value),
-    price: optionalNumber(editPrice.value)
+    name: $("editName").value.trim(),
+    barcode: $("editBarcode").value.trim(),
+    category_id: optionalNumber($("editCategory").value),
+    unit: $("editUnit").value,
+    min_stock: optionalNumber($("editMinStock").value),
+    price: optionalNumber($("editPrice").value),
+    cost_price: optionalNumber($("editCostPrice").value)
   };
 
-  setButtonLoading(saveEditModalBtn, true, "Saving...");
+  setButtonLoading(button, true, t("common.saving"));
 
   try {
-    const updated = await submitJson(`/products/${currentEditProductId}`, "PATCH", payload, "Update failed");
+    const updated = await submitJson(`/products/${currentEditProductId}`, "PATCH", payload, t("edit.failed"));
     if (!updated) return;
 
-    showToast("Product updated", "success");
+    showToast(t("edit.saved"), "success");
     closeModal(editModalOverlay);
     loadProducts();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
-    setButtonLoading(saveEditModalBtn, false);
+    setButtonLoading(button, false);
   }
 });
 
-confirmDeleteModalBtn.addEventListener("click", async () => {
-  setButtonLoading(confirmDeleteModalBtn, true, "Archiving...");
+$("confirmDeleteModalBtn").addEventListener("click", async (e) => {
+  const button = e.currentTarget;
+  setButtonLoading(button, true, t("common.saving"));
 
   try {
-    const result = await submitJson(`/products/${currentDeleteProductId}`, "DELETE", undefined, "Archive failed");
+    const result = await submitJson(`/products/${currentDeleteProductId}`, "DELETE", undefined, t("archive.failed"));
     if (!result) return;
 
-    showToast("Product archived", "success");
+    showToast(t("archive.done"), "success");
     closeModal(deleteModalOverlay);
     reloadAll();
   } catch (error) {
     console.error(error);
-    showToast("Request failed", "error");
+    showToast(t("common.requestFailed"), "error");
   } finally {
-    setButtonLoading(confirmDeleteModalBtn, false);
+    setButtonLoading(button, false);
   }
 });
 
-[stockModalOverlay, transferModalOverlay, historyModalOverlay, editModalOverlay, deleteModalOverlay].forEach(
+// ----- CSV export / import -----
+
+$("exportButton").addEventListener("click", () => {
+  downloadFile(`/products/export.csv?delimiter=${csvDelimiter()}`, "products.csv");
+});
+
+$("importTemplateButton").addEventListener("click", () => {
+  downloadFile(`/products/export.csv?delimiter=${csvDelimiter()}`, "products-template.csv");
+});
+
+$("importButton").addEventListener("click", () => {
+  importCsvText = null;
+  importFile.value = "";
+  $("importFileName").textContent = "";
+  importResult.innerHTML = "";
+  confirmImportBtn.disabled = true;
+  openModal(importModalOverlay);
+});
+
+function renderImportResult(result) {
+  const list = (items, cls) =>
+    items.length
+      ? `<ul class="import-list ${cls}">${items
+          .slice(0, 50)
+          .map((item) => `<li>${escapeHtml(t("import.row", { row: item.row }))}: ${escapeHtml(item.message)}</li>`)
+          .join("")}</ul>`
+      : "";
+
+  const summary = t(result.saved ? "import.savedSummary" : "import.previewSummary", {
+    created: result.created,
+    updated: result.updated,
+    categories: result.categories_created
+  });
+
+  importResult.innerHTML = `
+    <div class="import-summary ${result.errors.length ? "has-errors" : ""}">${escapeHtml(summary)}</div>
+    ${result.errors.length ? `<div class="metric-note">${escapeHtml(t("import.fixErrors"))}</div>` : ""}
+    ${list(result.errors, "is-error")}
+    ${list(result.warnings, "is-warning")}
+  `;
+}
+
+async function runImport(dryRun) {
+  const response = await apiFetch("/products/import", {
+    method: "POST",
+    body: JSON.stringify({ csv: importCsvText, dry_run: dryRun })
+  });
+  const data = await readJson(response);
+  if (!response.ok) {
+    importResult.innerHTML = `<div class="import-summary has-errors">${escapeHtml(
+      getErrorMessage(data, t("import.failed"))
+    )}</div>`;
+    return null;
+  }
+  renderImportResult(data);
+  return data;
+}
+
+importFile.addEventListener("change", async () => {
+  const file = importFile.files[0];
+  if (!file) return;
+
+  $("importFileName").textContent = file.name;
+  importResult.innerHTML = `<div class="metric-note">${escapeHtml(t("import.checking"))}</div>`;
+  confirmImportBtn.disabled = true;
+
+  try {
+    importCsvText = await file.text();
+    // A dry run first, so the user sees what will happen before anything is saved.
+    const preview = await runImport(true);
+    confirmImportBtn.disabled = !preview || preview.errors.length > 0 || preview.created + preview.updated === 0;
+  } catch (error) {
+    console.error(error);
+    importResult.innerHTML = `<div class="import-summary has-errors">${escapeHtml(t("import.failed"))}</div>`;
+  }
+});
+
+confirmImportBtn.addEventListener("click", async () => {
+  setButtonLoading(confirmImportBtn, true, t("common.saving"));
+  try {
+    const result = await runImport(false);
+    if (result?.saved) {
+      showToast(t("import.done"), "success");
+      categories = await loadCategories();
+      categoryFilter.innerHTML = categoryOptions(categories, null, t("common.allCategories"));
+      formCategory.innerHTML = categoryOptions(categories);
+      reloadFromFirstPage();
+    }
+  } finally {
+    setButtonLoading(confirmImportBtn, false);
+    confirmImportBtn.disabled = true;
+  }
+});
+
+// ----- Modal plumbing -----
+
+[stockModalOverlay, transferModalOverlay, historyModalOverlay, editModalOverlay, deleteModalOverlay, importModalOverlay].forEach(
   (overlay) => {
     overlay.addEventListener("click", (e) => {
       if (e.target === overlay || e.target.closest("[data-close-modal]")) {
@@ -648,7 +786,7 @@ if (currentUser) {
     await loadLookups();
   } catch (error) {
     console.error(error);
-    showToast("Failed to load categories and warehouses", "error");
+    showToast(t("products.lookupsFailed"), "error");
   }
   reloadAll();
 }

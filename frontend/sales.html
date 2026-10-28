@@ -3,92 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eysto Stock Out</title>
+  <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
   <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/main.css?v=10" />
-  <link rel="stylesheet" href="assets/css/sales.css?v=5" />
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/sales.css?v=6" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
-<body>
+<body data-page="stock-out" data-title-key="nav.stockOut">
   <div class="page-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <img src="assets/images/logo.svg" alt="Eysto logo" class="brand-logo" />
-        <div>
-          <div class="brand-title">Eysto</div>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a class="nav-link" href="dashboard.html">
-          <i data-lucide="layout-dashboard"></i>
-          <span>Dashboard</span>
-        </a>
-
-        <a class="nav-link" href="products.html">
-          <i data-lucide="package"></i>
-          <span>Products</span>
-        </a>
-
-        <a class="nav-link active" href="sales.html">
-          <i data-lucide="package-minus"></i>
-          <span>Stock Out</span>
-        </a>
-
-        <a class="nav-link" href="sales-history.html">
-          <i data-lucide="history"></i>
-          <span>Stock Out History</span>
-        </a>
-
-        <a class="nav-link" href="settings.html" data-role="admin">
-          <i data-lucide="settings"></i>
-          <span>Settings</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-user" data-current-user hidden>
-          <div class="sidebar-user-name" data-user-name></div>
-          <div class="sidebar-user-role" data-user-role></div>
-        </div>
-        <button class="btn btn-secondary logout-btn" data-logout>
-          <i data-lucide="log-out"></i>
-          <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+    <aside class="sidebar"></aside>
 
     <main class="content">
       <div class="topbar">
         <div>
-          <h1 class="page-title">Stock Out</h1>
-          <p class="page-subtitle">Record items leaving stock: sales, internal use, waste or returns.</p>
+          <h1 class="page-title" data-i18n="nav.stockOut"></h1>
+          <p class="page-subtitle" data-i18n="stockOut.subtitle"></p>
         </div>
       </div>
 
       <section class="card">
         <div class="card-header">
-          <h3>Details</h3>
+          <h3 data-i18n="stockOut.details"></h3>
         </div>
         <div class="card-body">
           <div class="form-grid">
             <div class="field">
-              <label for="reasonSelect">Reason</label>
+              <label for="reasonSelect" data-i18n="field.reason"></label>
               <div class="select-shell">
                 <select id="reasonSelect" class="select"></select>
               </div>
             </div>
 
             <div class="field" data-multi-warehouse hidden>
-              <label for="warehouseSelect">Warehouse</label>
+              <label for="warehouseSelect" data-i18n="field.warehouse"></label>
               <div class="select-shell">
                 <select id="warehouseSelect" class="select"></select>
               </div>
             </div>
 
             <div class="field" style="grid-column: 1 / -1;">
-              <label for="noteInput">Note <span class="field-hint">(customer, document no, reason...)</span></label>
+              <label for="noteInput"><span data-i18n="field.note"></span> <span class="field-hint" data-i18n="stockOut.noteHint"></span></label>
               <input id="noteInput" class="input" type="text" maxlength="500" />
             </div>
           </div>
@@ -97,25 +52,25 @@
 
       <section class="card section-spacing">
         <div class="card-header">
-          <h3>Add Item</h3>
+          <h3 data-i18n="stockOut.addItem"></h3>
         </div>
         <div class="card-body">
           <div class="product-picker">
             <div class="field">
-              <label for="productSelect">Product</label>
+              <label for="productSelect" data-i18n="field.product"></label>
               <div class="select-shell">
                 <select id="productSelect" class="select"></select>
               </div>
             </div>
 
             <div class="field">
-              <label id="saleQtyLabel" for="saleQtyValue">Quantity</label>
+              <label id="saleQtyLabel" for="saleQtyValue" data-i18n="field.quantity"></label>
               <div class="quantity-stepper" role="group" aria-labelledby="saleQtyLabel">
-                <button class="stepper-btn" id="decreaseQtyBtn" type="button" aria-label="Decrease quantity">
+                <button class="stepper-btn" id="decreaseQtyBtn" type="button" data-i18n-aria-label="stockOut.decrease">
                   <i data-lucide="minus"></i>
                 </button>
                 <input class="stepper-value stepper-input" id="saleQtyValue" type="number" min="0" step="1" value="1" />
-                <button class="stepper-btn" id="increaseQtyBtn" type="button" aria-label="Increase quantity">
+                <button class="stepper-btn" id="increaseQtyBtn" type="button" data-i18n-aria-label="stockOut.increase">
                   <i data-lucide="plus"></i>
                 </button>
               </div>
@@ -124,7 +79,7 @@
             <div>
               <button id="addToCartButton" class="btn btn-primary icon-btn" type="button">
                 <i data-lucide="plus"></i>
-                <span>Add Item</span>
+                <span data-i18n="stockOut.addItemButton"></span>
               </button>
             </div>
           </div>
@@ -134,18 +89,18 @@
       <div class="sales-side-grid section-spacing">
         <section class="card">
           <div class="card-header">
-            <h3>Items</h3>
+            <h3 data-i18n="stockOut.items"></h3>
           </div>
           <div class="card-body">
             <div class="table-wrap">
               <table class="table">
                 <thead>
                   <tr>
-                    <th>Product</th>
-                    <th>Qty</th>
-                    <th>Unit Price</th>
-                    <th>Total</th>
-                    <th>Action</th>
+                    <th data-i18n="col.product"></th>
+                    <th data-i18n="col.quantity"></th>
+                    <th data-i18n="col.unitPrice"></th>
+                    <th data-i18n="col.total"></th>
+                    <th data-i18n="col.actions"></th>
                   </tr>
                 </thead>
                 <tbody id="cartTable"></tbody>
@@ -155,12 +110,12 @@
             <div class="cart-empty-zone"></div>
 
             <div class="sales-summary section-spacing">
-              <div class="sales-meta">Total value</div>
-              <div id="cartTotal" class="sales-total">$0.00</div>
+              <div class="sales-meta" data-i18n="stockOut.totalValue"></div>
+              <div id="cartTotal" class="sales-total"></div>
               <div>
                 <button id="submitSaleButton" class="btn btn-primary icon-btn" type="button">
                   <i data-lucide="check"></i>
-                  <span>Record Stock Out</span>
+                  <span data-i18n="stockOut.record"></span>
                 </button>
               </div>
             </div>
@@ -169,7 +124,7 @@
 
         <section class="card available-products-card">
           <div class="card-header">
-            <h3>Available Products</h3>
+            <h3 data-i18n="stockOut.available"></h3>
           </div>
           <div class="card-body">
             <div id="availableProductsList" class="soft-list"></div>
@@ -179,7 +134,7 @@
     </main>
   </div>
 
-  <script type="module" src="assets/js/sales.js?v=5"></script>
+  <script type="module" src="assets/js/sales.js?v=6"></script>
   <script>
     lucide.createIcons();
   </script>

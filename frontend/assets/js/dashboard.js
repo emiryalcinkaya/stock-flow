@@ -1,6 +1,7 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { initProtectedPage } from "./auth.js?v=5";
-import { formatQuantity, STOCK_OUT_REASONS } from "./inventory.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { initProtectedPage } from "./auth.js?v=6";
+import { t } from "./i18n.js?v=6";
+import { formatQuantity, reasonLabel } from "./inventory.js?v=6";
 import {
   escapeHtml,
   formatCurrency,
@@ -9,7 +10,7 @@ import {
   renderEmptyRow,
   showToast,
   statusBadge
-} from "./ui.js?v=5";
+} from "./ui.js?v=6";
 
 const totalProductsEl = document.getElementById("totalProducts");
 const lowStockCountEl = document.getElementById("lowStockCount");
@@ -39,42 +40,42 @@ async function loadDashboard() {
   try {
     const [summaryRes, lowStockRes, salesRes] = await Promise.all([
       apiFetch("/dashboard/summary"),
-      apiFetch("/products/?low_stock=true&limit=10"),
+      apiFetch("/products/?low_stock=true&sort=low_stock_first&limit=10"),
       apiFetch("/sales/?limit=5")
     ]);
 
     const summary = await readJson(summaryRes);
     if (!summaryRes.ok) {
-      showToast(getErrorMessage(summary, "Failed to load dashboard"), "error");
+      showToast(getErrorMessage(summary, t("dashboard.loadFailed")), "error");
       return;
     }
 
     totalProductsEl.textContent = summary.total_products;
     lowStockCountEl.textContent = summary.low_stock;
-    lowStockNoteEl.textContent = `Below their minimum (default ${summary.low_stock_threshold})`;
+    lowStockNoteEl.textContent = t("dashboard.lowStockNote", { threshold: summary.low_stock_threshold });
     stockValueEl.textContent = formatCurrency(summary.stock_value);
     totalRevenueEl.textContent = formatCurrency(summary.revenue);
-    salesNoteEl.textContent = `${summary.total_sales} completed sales`;
+    salesNoteEl.textContent = t("dashboard.salesNote", { count: summary.total_sales });
 
     const lowStock = await readJson(lowStockRes);
     if (lowStockRes.ok) renderLowStock(lowStock);
 
     const sales = await readJson(salesRes);
     if (!salesRes.ok) {
-      showToast(getErrorMessage(sales, "Failed to load stock outs"), "error");
+      showToast(getErrorMessage(sales, t("dashboard.loadFailed")), "error");
       return;
     }
 
     renderRecentSales(sales);
   } catch (error) {
     console.error(error);
-    showToast("Failed to load dashboard", "error");
+    showToast(t("dashboard.loadFailed"), "error");
   }
 }
 
 function renderLowStock(products) {
   if (!products.length) {
-    renderEmptyRow(lowStockTable, 4, "All products are above their minimum stock.");
+    renderEmptyRow(lowStockTable, 4, t("dashboard.noLowStock"));
     return;
   }
 
@@ -85,7 +86,11 @@ function renderLowStock(products) {
           <td><strong>${escapeHtml(product.name)}</strong></td>
           <td>${escapeHtml(product.category_name || "-")}</td>
           <td class="stock-low">${escapeHtml(formatQuantity(product.stock_quantity, product.unit))}</td>
-          <td>${product.min_stock === null ? "Default" : escapeHtml(formatQuantity(product.min_stock, product.unit))}</td>
+          <td>${
+            product.min_stock === null
+              ? escapeHtml(t("common.default"))
+              : escapeHtml(formatQuantity(product.min_stock, product.unit))
+          }</td>
         </tr>
       `
     )
@@ -94,7 +99,7 @@ function renderLowStock(products) {
 
 function renderRecentSales(sales) {
   if (!sales.length) {
-    renderEmptyRow(recentSalesTable, 5, "No stock outs yet.");
+    renderEmptyRow(recentSalesTable, 5, t("dashboard.noStockOuts"));
     return;
   }
 
@@ -103,7 +108,7 @@ function renderRecentSales(sales) {
       (sale) => `
         <tr>
           <td>#${escapeHtml(sale.id)}</td>
-          <td>${escapeHtml(STOCK_OUT_REASONS[sale.reason] || sale.reason)}</td>
+          <td>${escapeHtml(reasonLabel(sale.reason))}</td>
           <td>${formatCurrency(sale.total_price)}</td>
           <td>${statusBadge(sale.status)}</td>
           <td>${escapeHtml(formatDate(sale.created_at))}</td>

@@ -7,8 +7,12 @@ import {
   readJson,
   setCachedUser,
   setToken
-} from "./config.js?v=5";
-import { getErrorMessage, refreshIcons, setButtonLoading, showToast } from "./ui.js?v=5";
+} from "./config.js?v=6";
+import { applyTranslations, getLanguage, LANGUAGES, setLanguage, t } from "./i18n.js?v=6";
+import { renderSidebar } from "./layout.js?v=6";
+import { getErrorMessage, setButtonLoading, setCurrency, showToast } from "./ui.js?v=6";
+
+const COMPANY_KEY = "companyLoaded";
 
 export function requireAuth() {
   const token = getToken();
@@ -22,14 +26,12 @@ export function requireAuth() {
 
 export function logout() {
   clearToken();
+  try {
+    sessionStorage.removeItem(COMPANY_KEY);
+  } catch {
+    // Nothing cached.
+  }
   window.location.href = "index.html";
-}
-
-export function initSidebarLogout() {
-  const logoutButtons = document.querySelectorAll("[data-logout]");
-  logoutButtons.forEach((button) => {
-    button.addEventListener("click", logout);
-  });
 }
 
 export function isAdmin(user) {
@@ -48,6 +50,33 @@ export async function loadCurrentUser() {
   return user;
 }
 
+// The business currency is needed by every page that shows money.
+async function loadCompanySettings() {
+  try {
+    if (sessionStorage.getItem(COMPANY_KEY)) return;
+  } catch {
+    // Storage blocked: load every time.
+  }
+
+  const response = await apiFetch("/company");
+  if (!response.ok) return;
+  const company = await readJson(response);
+  setCurrency(company.currency || "USD");
+  try {
+    sessionStorage.setItem(COMPANY_KEY, "1");
+  } catch {
+    // Fine: it will be loaded again on the next page.
+  }
+}
+
+export function forgetCompanySettings() {
+  try {
+    sessionStorage.removeItem(COMPANY_KEY);
+  } catch {
+    // Nothing cached.
+  }
+}
+
 // Elements marked with data-role="admin" are only shown to admins.
 // This is a UX convenience; the API enforces the real permissions.
 function applyRoleVisibility(user) {
@@ -56,62 +85,16 @@ function applyRoleVisibility(user) {
   });
 }
 
-function renderSidebarUser(user) {
-  const container = document.querySelector("[data-current-user]");
-  if (!container || !user) return;
-
-  container.querySelector("[data-user-name]").textContent = user.full_name;
-  container.querySelector("[data-user-role]").textContent = user.role;
-  container.hidden = false;
-}
-
-const SIDEBAR_KEY = "sidebarCollapsed";
-
-// Each page's <head> applies the saved state before render, so there is no flash.
-function initSidebarToggle() {
-  const brand = document.querySelector(".sidebar .brand");
-  if (!brand) return;
-
-  // Collapsed sidebar shows icons only, so give every item a hover label.
-  document.querySelectorAll(".sidebar .nav-link, .sidebar [data-logout]").forEach((item) => {
-    item.title = item.textContent.trim();
-  });
-
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "sidebar-toggle";
-  brand.appendChild(button);
-
-  const render = () => {
-    const collapsed = document.documentElement.classList.contains("sidebar-collapsed");
-    button.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar");
-    button.title = button.getAttribute("aria-label");
-    button.innerHTML = `<i data-lucide="${collapsed ? "panel-left-open" : "panel-left-close"}"></i>`;
-    refreshIcons();
-  };
-
-  button.addEventListener("click", () => {
-    const collapsed = document.documentElement.classList.toggle("sidebar-collapsed");
-    try {
-      localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0");
-    } catch {
-      // Storage can be unavailable (private mode); the toggle still works for this page.
-    }
-    render();
-  });
-
-  render();
-}
-
 /**
- * Common setup for every protected page.
+ * Common setup for every protected page: auth check, sidebar, translations,
+ * role-based visibility and business currency.
  * Returns the current user, or null when the visitor is being redirected.
+ * With adminOnly, non-admins are sent to the dashboard.
  */
-export async function initProtectedPage() {
+export async function initProtectedPage({ adminOnly = false } = {}) {
   if (!requireAuth()) return null;
 
-  initSidebarLogout();
-  initSidebarToggle();
+  applyTranslations();
 
   const user = await loadCurrentUser();
   if (!user) {
@@ -119,15 +102,35 @@ export async function initProtectedPage() {
     return null;
   }
 
+  if (adminOnly && !isAdmin(user)) {
+    window.location.replace("dashboard.html");
+    return null;
+  }
+
+  await loadCompanySettings();
+  renderSidebar(user);
+  document.querySelectorAll("[data-logout]").forEach((button) => button.addEventListener("click", logout));
   applyRoleVisibility(user);
-  renderSidebarUser(user);
   return user;
 }
 
-export function initLoginPage() {
-  const form = document.getElementById("loginForm");
-  if (!form) return;
+export function languageOptions(selected = getLanguage()) {
+  return Object.entries(LANGUAGES)
+    .map(([code, { label }]) => `<option value="${code}" ${code === selected ? "selected" : ""}>${label}</option>`)
+    .join("");
+}
 
+export function initLoginPage() {
+  applyTranslations();
+
+  const languageSelect = document.getElementById("languageSelect");
+  languageSelect.innerHTML = languageOptions();
+  languageSelect.addEventListener("change", () => {
+    setLanguage(languageSelect.value);
+    applyTranslations();
+  });
+
+  const form = document.getElementById("loginForm");
   const token = getToken();
   if (token && !isTokenExpired(token)) {
     window.location.replace("dashboard.html");
@@ -145,7 +148,7 @@ export function initLoginPage() {
 
     messageEl.textContent = "";
     messageEl.className = "form-message";
-    setButtonLoading(button, true, "Signing in...");
+    setButtonLoading(button, true, t("login.signingIn"));
 
     try {
       const response = await apiFetch("/auth/login", {
@@ -156,24 +159,23 @@ export function initLoginPage() {
       const data = await readJson(response);
 
       if (!response.ok) {
-        messageEl.textContent = getErrorMessage(data, "Login failed");
+        messageEl.textContent = getErrorMessage(data, t("login.failed"));
         messageEl.className = "form-message error";
         setButtonLoading(button, false);
         return;
       }
 
       clearToken();
+      forgetCompanySettings();
       setToken(data.access_token);
-      messageEl.textContent = "Login successful!";
-      messageEl.className = "form-message success";
-      showToast("Welcome back", "success");
+      showToast(t("login.welcome"), "success");
 
       setTimeout(() => {
         window.location.href = "dashboard.html";
-      }, 700);
+      }, 500);
     } catch (error) {
       console.error(error);
-      messageEl.textContent = "Could not reach the server";
+      messageEl.textContent = t("common.serverUnreachable");
       messageEl.className = "form-message error";
       setButtonLoading(button, false);
     }

@@ -1,7 +1,8 @@
-import { apiFetch, readJson } from "./config.js?v=5";
-import { escapeHtml } from "./ui.js?v=5";
+import { apiFetch, readJson } from "./config.js?v=6";
+import { t } from "./i18n.js?v=6";
+import { escapeHtml, formatNumber } from "./ui.js?v=6";
 
-// Shared lookups (units, categories, warehouses) used by several pages.
+// Shared lookups (units, categories, warehouses, suppliers) used by several pages.
 
 async function getJson(endpoint) {
   const response = await apiFetch(endpoint);
@@ -13,13 +14,16 @@ async function getJson(endpoint) {
 export const loadUnits = () => getJson("/units");
 export const loadCategories = () => getJson("/categories");
 export const loadWarehouses = () => getJson("/warehouses");
+export const loadSuppliers = () => getJson("/suppliers");
 export const loadWarehouseStock = (warehouseId) => getJson(`/warehouses/${warehouseId}/stock`);
 
-const quantityFormatter = new Intl.NumberFormat("en-US", { maximumFractionDigits: 3 });
+export function unitLabel(code) {
+  return t(`unit.${code}`);
+}
 
 export function formatQuantity(value, unit) {
-  const amount = quantityFormatter.format(Number(value || 0));
-  return unit ? `${amount} ${unit}` : amount;
+  const amount = formatNumber(value);
+  return unit ? `${amount} ${unitLabel(unit)}` : amount;
 }
 
 export function isWholeUnit(units, unitCode) {
@@ -37,14 +41,14 @@ export function unitOptions(units, selected = "pcs") {
     .map(
       (unit) => `
         <option value="${escapeHtml(unit.code)}" ${unit.code === selected ? "selected" : ""}>
-          ${escapeHtml(unit.label)} (${escapeHtml(unit.code)})
+          ${escapeHtml(t(`unitName.${unit.code}`))} (${escapeHtml(unitLabel(unit.code))})
         </option>
       `
     )
     .join("");
 }
 
-export function categoryOptions(categories, selected = null, emptyLabel = "No category") {
+export function categoryOptions(categories, selected = null, emptyLabel = t("common.noCategory")) {
   return [
     `<option value="">${escapeHtml(emptyLabel)}</option>`,
     ...categories.map(
@@ -63,32 +67,41 @@ export function warehouseOptions(warehouses, selected = null) {
     .map(
       (warehouse) => `
         <option value="${warehouse.id}" ${warehouse.id === selectedId ? "selected" : ""}>
-          ${escapeHtml(warehouse.name)}${warehouse.is_default ? " (default)" : ""}
+          ${escapeHtml(warehouse.name)}${warehouse.is_default ? ` (${escapeHtml(t("common.default"))})` : ""}
         </option>
       `
     )
     .join("");
 }
 
-export const STOCK_OUT_REASONS = {
-  sale: "Sale",
-  consumption: "Internal use",
-  waste: "Waste / damage",
-  return_to_supplier: "Return to supplier",
-  other: "Other"
-};
+export function supplierOptions(suppliers, selected = null) {
+  return [
+    `<option value="">${escapeHtml(t("common.noSupplier"))}</option>`,
+    ...suppliers.map(
+      (supplier) => `
+        <option value="${supplier.id}" ${supplier.id === selected ? "selected" : ""}>${escapeHtml(supplier.name)}</option>
+      `
+    )
+  ].join("");
+}
 
-export const MOVEMENT_LABELS = {
-  initial: "Opening stock",
-  restock: "Stock in",
-  stock_out: "Stock out",
-  adjustment: "Adjustment",
-  sale: "Sale",
-  sale_cancelled: "Cancelled stock out",
-  transfer_in: "Transfer in",
-  transfer_out: "Transfer out",
-  ...STOCK_OUT_REASONS
-};
+export const STOCK_OUT_REASONS = ["sale", "consumption", "waste", "return_to_supplier", "other"];
+
+export function reasonLabel(reason) {
+  return t(`reason.${reason}`);
+}
+
+export function reasonOptions(selected = "sale", { includeAll = false } = {}) {
+  const options = STOCK_OUT_REASONS.map(
+    (reason) => `<option value="${reason}" ${reason === selected ? "selected" : ""}>${escapeHtml(reasonLabel(reason))}</option>`
+  );
+  if (includeAll) options.unshift(`<option value="">${escapeHtml(t("common.allReasons"))}</option>`);
+  return options.join("");
+}
+
+export function movementLabel(reason) {
+  return t(`movement.${reason}`);
+}
 
 // Turns an empty input into null and anything else into a number.
 export function optionalNumber(value) {

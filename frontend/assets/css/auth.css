@@ -89,3 +89,30 @@
     font-size: 42px;
   }
 }
+
+/* Logo on the left, language picker on the right. */
+.auth-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.auth-top .auth-brand {
+  margin-bottom: 0;
+}
+
+.auth-language {
+  width: 150px;
+}
+
+.auth-language .select {
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 14px;
+}
+
+.auth-footer span {
+  margin-right: 4px;
+}

@@ -3,157 +3,127 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eysto Products</title>
+  <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
   <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/main.css?v=10" />
-  <link rel="stylesheet" href="assets/css/products.css?v=5" />
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
+  <link rel="stylesheet" href="assets/css/products.css?v=6" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
-<body>
+<body data-page="products" data-title-key="nav.products">
   <div class="page-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <img src="assets/images/logo.svg" alt="Eysto logo" class="brand-logo" />
-        <div>
-          <div class="brand-title">Eysto</div>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a class="nav-link" href="dashboard.html">
-          <i data-lucide="layout-dashboard"></i>
-          <span>Dashboard</span>
-        </a>
-
-        <a class="nav-link active" href="products.html">
-          <i data-lucide="package"></i>
-          <span>Products</span>
-        </a>
-
-        <a class="nav-link" href="sales.html">
-          <i data-lucide="package-minus"></i>
-          <span>Stock Out</span>
-        </a>
-
-        <a class="nav-link" href="sales-history.html">
-          <i data-lucide="history"></i>
-          <span>Stock Out History</span>
-        </a>
-
-        <a class="nav-link" href="settings.html" data-role="admin">
-          <i data-lucide="settings"></i>
-          <span>Settings</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-user" data-current-user hidden>
-          <div class="sidebar-user-name" data-user-name></div>
-          <div class="sidebar-user-role" data-user-role></div>
-        </div>
-        <button class="btn btn-secondary logout-btn" data-logout>
-          <i data-lucide="log-out"></i>
-          <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+    <aside class="sidebar"></aside>
 
     <main class="content">
       <div class="topbar">
         <div>
-          <h1 class="page-title">Products</h1>
-          <p class="page-subtitle">Manage your products and stock.</p>
+          <h1 class="page-title" data-i18n="nav.products"></h1>
+          <p class="page-subtitle" data-i18n="products.subtitle"></p>
+        </div>
+        <div class="topbar-actions">
+          <button id="exportButton" class="btn btn-secondary icon-btn" type="button">
+            <i data-lucide="download"></i>
+            <span data-i18n="common.exportCsv"></span>
+          </button>
+          <button id="importButton" class="btn btn-secondary icon-btn" type="button" data-role="admin">
+            <i data-lucide="upload"></i>
+            <span data-i18n="common.importCsv"></span>
+          </button>
         </div>
       </div>
 
       <section class="card product-form-card" data-role="admin">
         <div class="card-header">
-          <h3>Add New Product</h3>
+          <h3 data-i18n="products.addTitle"></h3>
         </div>
 
         <div class="card-body">
           <form id="productForm" class="form-grid">
             <div class="field">
-              <label for="name">Product Name</label>
-              <input id="name" class="input" type="text" required />
+              <label for="name" data-i18n="field.productName"></label>
+              <input id="name" class="input" type="text" maxlength="100" required />
             </div>
 
             <div class="field">
-              <label for="barcode">Barcode / SKU</label>
-              <input id="barcode" class="input" type="text" required />
+              <label for="barcode" data-i18n="field.barcode"></label>
+              <input id="barcode" class="input" type="text" maxlength="100" required />
             </div>
 
             <div class="field">
-              <label for="category">Category</label>
+              <label for="category" data-i18n="field.category"></label>
               <div class="select-shell">
                 <select id="category" class="select"></select>
               </div>
             </div>
 
             <div class="field">
-              <label for="unit">Unit</label>
+              <label for="unit" data-i18n="field.unit"></label>
               <div class="select-shell">
                 <select id="unit" class="select"></select>
               </div>
             </div>
 
             <div class="field">
-              <label for="stock_quantity">Opening Stock</label>
+              <label for="stock_quantity" data-i18n="field.openingStock"></label>
               <input id="stock_quantity" class="input" type="number" min="0" step="1" value="0" required />
             </div>
 
             <div class="field" data-multi-warehouse hidden>
-              <label for="warehouse">Warehouse</label>
+              <label for="warehouse" data-i18n="field.warehouse"></label>
               <div class="select-shell">
                 <select id="warehouse" class="select"></select>
               </div>
             </div>
 
             <div class="field">
-              <label for="min_stock">Minimum Stock <span class="field-hint">(optional)</span></label>
-              <input id="min_stock" class="input" type="number" min="0" step="1" placeholder="Default" />
+              <label for="min_stock"><span data-i18n="field.minStock"></span> <span class="field-hint" data-i18n="common.optional"></span></label>
+              <input id="min_stock" class="input" type="number" min="0" step="1" data-i18n-placeholder="common.default" />
             </div>
 
             <div class="field">
-              <label for="price">Price <span class="field-hint">(optional)</span></label>
+              <label for="price"><span data-i18n="field.salePrice"></span> <span class="field-hint" data-i18n="common.optional"></span></label>
               <input id="price" class="input" type="number" step="0.01" min="0.01" />
             </div>
 
+            <div class="field">
+              <label for="cost_price"><span data-i18n="field.costPrice"></span> <span class="field-hint" data-i18n="common.optional"></span></label>
+              <input id="cost_price" class="input" type="number" step="0.01" min="0" />
+            </div>
+
             <div style="grid-column: 1 / -1;">
-              <button id="addProductButton" class="btn btn-primary" type="submit">
+              <button id="addProductButton" class="btn btn-primary icon-btn" type="submit">
                 <i data-lucide="package-plus"></i>
-                <span>Add Product</span>
+                <span data-i18n="products.add"></span>
               </button>
             </div>
           </form>
         </div>
       </section>
 
-      <section class="card">
+      <section class="card section-spacing">
         <div class="card-header">
-          <h3>Active Products</h3>
+          <h3 data-i18n="products.activeTitle"></h3>
           <div class="table-filters">
-            <input id="productSearch" class="input table-search" type="search" placeholder="Search name or barcode" aria-label="Search products" />
+            <input id="productSearch" class="input table-search" type="search" data-i18n-placeholder="products.search" data-i18n-aria-label="products.search" />
             <div class="select-shell">
-              <select id="categoryFilter" class="select" aria-label="Filter by category"></select>
+              <select id="categoryFilter" class="select" data-i18n-aria-label="field.category"></select>
             </div>
             <div class="select-shell">
-              <select id="sortSelect" class="select" aria-label="Sort products">
-                <option value="id">Sort: ID</option>
-                <option value="newest">Newest first</option>
-                <option value="name">Name (A–Z)</option>
-                <option value="low_stock_first">Low stock first</option>
-                <option value="stock_asc">Stock: low to high</option>
-                <option value="stock_desc">Stock: high to low</option>
-                <option value="price_asc">Price: low to high</option>
-                <option value="price_desc">Price: high to low</option>
+              <select id="sortSelect" class="select" data-i18n-aria-label="sort.label">
+                <option value="id" data-i18n="sort.id"></option>
+                <option value="newest" data-i18n="sort.newest"></option>
+                <option value="name" data-i18n="sort.name"></option>
+                <option value="low_stock_first" data-i18n="sort.lowStockFirst"></option>
+                <option value="stock_asc" data-i18n="sort.stockAsc"></option>
+                <option value="stock_desc" data-i18n="sort.stockDesc"></option>
+                <option value="price_asc" data-i18n="sort.priceAsc"></option>
+                <option value="price_desc" data-i18n="sort.priceDesc"></option>
               </select>
             </div>
             <label class="filter-toggle">
               <input id="lowStockFilter" type="checkbox" />
               <i data-lucide="triangle-alert"></i>
-              <span>Low stock</span>
+              <span data-i18n="products.lowStock"></span>
             </label>
           </div>
         </div>
@@ -163,24 +133,25 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Category</th>
-                  <th>Barcode</th>
-                  <th>Price</th>
-                  <th>Stock</th>
-                  <th>Actions</th>
+                  <th data-i18n="col.id"></th>
+                  <th data-i18n="col.name"></th>
+                  <th data-i18n="col.category"></th>
+                  <th data-i18n="col.barcode"></th>
+                  <th data-i18n="col.price"></th>
+                  <th data-i18n="col.stock"></th>
+                  <th data-i18n="col.actions"></th>
                 </tr>
               </thead>
               <tbody id="productsTable"></tbody>
             </table>
           </div>
+          <div id="productsPager"></div>
         </div>
       </section>
 
       <section class="card section-spacing" data-role="admin">
         <div class="card-header">
-          <h3>Archived Products</h3>
+          <h3 data-i18n="products.archivedTitle"></h3>
         </div>
 
         <div class="card-body">
@@ -188,15 +159,16 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Barcode</th>
-                  <th>Actions</th>
+                  <th data-i18n="col.id"></th>
+                  <th data-i18n="col.name"></th>
+                  <th data-i18n="col.barcode"></th>
+                  <th data-i18n="col.actions"></th>
                 </tr>
               </thead>
               <tbody id="archivedProductsTable"></tbody>
             </table>
           </div>
+          <div id="archivedPager"></div>
         </div>
       </section>
     </main>
@@ -210,37 +182,54 @@
             <i data-lucide="boxes"></i>
           </div>
           <div>
-            <div id="stockModalTitle" class="modal-title">Update Stock</div>
-            <div id="stockModalSubtitle" class="modal-subtitle">Enter the quantity you want to apply.</div>
+            <div id="stockModalTitle" class="modal-title"></div>
+            <div id="stockModalSubtitle" class="modal-subtitle"></div>
           </div>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Close stock modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
       </div>
 
       <div class="modal-body">
         <div class="product-modal-grid">
           <div class="field">
-            <label for="stockModalQuantity">Quantity</label>
+            <label for="stockModalQuantity" data-i18n="field.quantity"></label>
             <input id="stockModalQuantity" class="input" type="number" min="0" step="1" />
           </div>
 
           <div class="field" data-multi-warehouse hidden>
-            <label for="stockModalWarehouse">Warehouse</label>
+            <label for="stockModalWarehouse" data-i18n="field.warehouse"></label>
             <div class="select-shell">
               <select id="stockModalWarehouse" class="select"></select>
             </div>
           </div>
 
-          <div class="field" style="grid-column: 1 / -1;">
-            <label for="stockModalNote">Note <span class="field-hint">(supplier, document no, reason...)</span></label>
+          <div class="field" data-stock-in-only>
+            <label for="stockModalSupplier" data-i18n="field.supplier"></label>
+            <div class="select-shell">
+              <select id="stockModalSupplier" class="select"></select>
+            </div>
+          </div>
+
+          <div class="field" data-stock-in-only>
+            <label for="stockModalUnitCost"><span data-i18n="field.unitCost"></span> <span class="field-hint" data-i18n="common.optional"></span></label>
+            <input id="stockModalUnitCost" class="input" type="number" min="0" step="0.01" />
+          </div>
+
+          <div class="field" data-stock-in-only>
+            <label for="stockModalDocument" data-i18n="field.documentNo"></label>
+            <input id="stockModalDocument" class="input" type="text" maxlength="100" />
+          </div>
+
+          <div class="field">
+            <label for="stockModalNote" data-i18n="field.note"></label>
             <input id="stockModalNote" class="input" type="text" maxlength="500" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
-        <button class="btn btn-primary" id="confirmStockModalBtn">Confirm</button>
+        <button class="btn btn-secondary" type="button" data-close-modal data-i18n="common.cancel"></button>
+        <button class="btn btn-primary" id="confirmStockModalBtn" data-i18n="common.confirm"></button>
       </div>
     </div>
   </div>
@@ -253,36 +242,36 @@
             <i data-lucide="arrow-left-right"></i>
           </div>
           <div>
-            <div class="modal-title">Transfer Stock</div>
-            <div id="transferModalSubtitle" class="modal-subtitle">Move stock between warehouses.</div>
+            <div class="modal-title" data-i18n="transfer.title"></div>
+            <div id="transferModalSubtitle" class="modal-subtitle"></div>
           </div>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Close transfer modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
       </div>
 
       <div class="modal-body">
         <div class="product-modal-grid">
           <div class="field">
-            <label for="transferFrom">From</label>
+            <label for="transferFrom" data-i18n="transfer.from"></label>
             <div class="select-shell">
               <select id="transferFrom" class="select"></select>
             </div>
           </div>
 
           <div class="field">
-            <label for="transferTo">To</label>
+            <label for="transferTo" data-i18n="transfer.to"></label>
             <div class="select-shell">
               <select id="transferTo" class="select"></select>
             </div>
           </div>
 
           <div class="field">
-            <label for="transferQuantity">Quantity</label>
+            <label for="transferQuantity" data-i18n="field.quantity"></label>
             <input id="transferQuantity" class="input" type="number" min="0" step="1" />
           </div>
 
           <div class="field">
-            <label for="transferNote">Note</label>
+            <label for="transferNote" data-i18n="field.note"></label>
             <input id="transferNote" class="input" type="text" maxlength="500" />
           </div>
         </div>
@@ -290,8 +279,8 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
-        <button class="btn btn-primary" id="confirmTransferBtn">Transfer</button>
+        <button class="btn btn-secondary" type="button" data-close-modal data-i18n="common.cancel"></button>
+        <button class="btn btn-primary" id="confirmTransferBtn" data-i18n="transfer.confirm"></button>
       </div>
     </div>
   </div>
@@ -304,11 +293,11 @@
             <i data-lucide="history"></i>
           </div>
           <div>
-            <div class="modal-title">Stock History</div>
+            <div class="modal-title" data-i18n="history.title"></div>
             <div id="historyModalSubtitle" class="modal-subtitle"></div>
           </div>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Close history modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -317,13 +306,13 @@
           <table class="table">
             <thead>
               <tr>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Warehouse</th>
-                <th>Change</th>
-                <th>Total After</th>
-                <th>User</th>
-                <th>Note</th>
+                <th data-i18n="col.date"></th>
+                <th data-i18n="col.type"></th>
+                <th data-i18n="col.warehouse"></th>
+                <th data-i18n="col.change"></th>
+                <th data-i18n="col.totalAfter"></th>
+                <th data-i18n="col.user"></th>
+                <th data-i18n="col.details"></th>
               </tr>
             </thead>
             <tbody id="historyTable"></tbody>
@@ -341,54 +330,59 @@
             <i data-lucide="square-pen"></i>
           </div>
           <div>
-            <div class="modal-title">Edit Product</div>
-            <div class="modal-subtitle">Use Stock In / Stock Out to change quantities.</div>
+            <div class="modal-title" data-i18n="edit.title"></div>
+            <div class="modal-subtitle" data-i18n="edit.subtitle"></div>
           </div>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Close edit modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
       </div>
 
       <div class="modal-body">
         <div class="product-modal-grid">
           <div class="field">
-            <label for="editName">Product Name</label>
-            <input id="editName" class="input" type="text" />
+            <label for="editName" data-i18n="field.productName"></label>
+            <input id="editName" class="input" type="text" maxlength="100" />
           </div>
 
           <div class="field">
-            <label for="editBarcode">Barcode / SKU</label>
-            <input id="editBarcode" class="input" type="text" />
+            <label for="editBarcode" data-i18n="field.barcode"></label>
+            <input id="editBarcode" class="input" type="text" maxlength="100" />
           </div>
 
           <div class="field">
-            <label for="editCategory">Category</label>
+            <label for="editCategory" data-i18n="field.category"></label>
             <div class="select-shell">
               <select id="editCategory" class="select"></select>
             </div>
           </div>
 
           <div class="field">
-            <label for="editUnit">Unit</label>
+            <label for="editUnit" data-i18n="field.unit"></label>
             <div class="select-shell">
               <select id="editUnit" class="select"></select>
             </div>
           </div>
 
           <div class="field">
-            <label for="editMinStock">Minimum Stock</label>
-            <input id="editMinStock" class="input" type="number" min="0" step="1" placeholder="Default" />
+            <label for="editMinStock" data-i18n="field.minStock"></label>
+            <input id="editMinStock" class="input" type="number" min="0" step="1" data-i18n-placeholder="common.default" />
           </div>
 
           <div class="field">
-            <label for="editPrice">Price</label>
-            <input id="editPrice" class="input" type="number" step="0.01" min="0.01" placeholder="No price" />
+            <label for="editPrice" data-i18n="field.salePrice"></label>
+            <input id="editPrice" class="input" type="number" step="0.01" min="0.01" data-i18n-placeholder="common.none" />
+          </div>
+
+          <div class="field">
+            <label for="editCostPrice" data-i18n="field.costPrice"></label>
+            <input id="editCostPrice" class="input" type="number" step="0.01" min="0" data-i18n-placeholder="common.none" />
           </div>
         </div>
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
-        <button class="btn btn-primary" id="saveEditModalBtn">Save</button>
+        <button class="btn btn-secondary" type="button" data-close-modal data-i18n="common.cancel"></button>
+        <button class="btn btn-primary" id="saveEditModalBtn" data-i18n="common.save"></button>
       </div>
     </div>
   </div>
@@ -401,11 +395,11 @@
             <i data-lucide="archive"></i>
           </div>
           <div>
-            <div class="modal-title">Archive Product</div>
-            <div class="modal-subtitle">The product will be hidden from active lists.</div>
+            <div class="modal-title" data-i18n="archive.title"></div>
+            <div class="modal-subtitle" data-i18n="archive.subtitle"></div>
           </div>
         </div>
-        <button class="modal-close" type="button" data-close-modal aria-label="Close archive modal">&times;</button>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
       </div>
 
       <div class="modal-body">
@@ -413,8 +407,48 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" data-close-modal>Cancel</button>
-        <button class="btn btn-danger" id="confirmDeleteModalBtn">Archive</button>
+        <button class="btn btn-secondary" type="button" data-close-modal data-i18n="common.cancel"></button>
+        <button class="btn btn-danger" id="confirmDeleteModalBtn" data-i18n="archive.confirm"></button>
+      </div>
+    </div>
+  </div>
+
+  <div id="importModalOverlay" class="modal-overlay">
+    <div class="modal modal-wide">
+      <div class="modal-header">
+        <div class="modal-head-group">
+          <div class="icon-chip">
+            <i data-lucide="file-spreadsheet"></i>
+          </div>
+          <div>
+            <div class="modal-title" data-i18n="import.title"></div>
+            <div class="modal-subtitle" data-i18n="import.subtitle"></div>
+          </div>
+        </div>
+        <button class="modal-close" type="button" data-close-modal data-i18n-aria-label="common.close">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <p class="metric-note import-help" data-i18n="import.help"></p>
+        <code class="import-columns">barcode, name, category, unit, price, cost_price, min_stock, stock_quantity</code>
+        <div class="import-actions">
+          <label class="btn btn-secondary icon-btn" for="importFile">
+            <i data-lucide="file-up"></i>
+            <span data-i18n="import.chooseFile"></span>
+          </label>
+          <input id="importFile" type="file" accept=".csv,text/csv" hidden />
+          <button id="importTemplateButton" class="btn btn-secondary icon-btn" type="button">
+            <i data-lucide="download"></i>
+            <span data-i18n="import.template"></span>
+          </button>
+          <span id="importFileName" class="metric-note"></span>
+        </div>
+        <div id="importResult" class="import-result"></div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" data-close-modal data-i18n="common.cancel"></button>
+        <button class="btn btn-primary" id="confirmImportBtn" data-i18n="import.confirm" disabled></button>
       </div>
     </div>
   </div>

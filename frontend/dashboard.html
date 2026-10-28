@@ -3,67 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Eysto Dashboard</title>
+  <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
   <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/main.css?v=10" />
+  <link rel="stylesheet" href="assets/css/main.css?v=6" />
   <link rel="stylesheet" href="assets/css/dashboard.css?v=6" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
-<body>
+<body data-page="dashboard" data-title-key="nav.dashboard">
   <div class="page-shell">
-    <aside class="sidebar">
-      <div class="brand">
-        <img src="assets/images/logo.svg" alt="Eysto logo" class="brand-logo" />
-        <div>
-          <div class="brand-title">Eysto</div>
-        </div>
-      </div>
-
-      <nav class="nav">
-        <a class="nav-link active" href="dashboard.html">
-          <i data-lucide="layout-dashboard"></i>
-          <span>Dashboard</span>
-        </a>
-
-        <a class="nav-link" href="products.html">
-          <i data-lucide="package"></i>
-          <span>Products</span>
-        </a>
-
-        <a class="nav-link" href="sales.html">
-          <i data-lucide="package-minus"></i>
-          <span>Stock Out</span>
-        </a>
-
-        <a class="nav-link" href="sales-history.html">
-          <i data-lucide="history"></i>
-          <span>Stock Out History</span>
-        </a>
-
-        <a class="nav-link" href="settings.html" data-role="admin">
-          <i data-lucide="settings"></i>
-          <span>Settings</span>
-        </a>
-      </nav>
-
-      <div class="sidebar-footer">
-        <div class="sidebar-user" data-current-user hidden>
-          <div class="sidebar-user-name" data-user-name></div>
-          <div class="sidebar-user-role" data-user-role></div>
-        </div>
-        <button class="btn btn-secondary logout-btn" data-logout>
-          <i data-lucide="log-out"></i>
-          <span>Logout</span>
-        </button>
-      </div>
-    </aside>
+    <aside class="sidebar"></aside>
 
     <main class="content">
       <div class="topbar">
         <div>
-          <h1 class="page-title">Dashboard</h1>
-          <p class="page-subtitle">Overview of products, stock levels and recent stock outs.</p>
+          <h1 class="page-title" data-i18n="nav.dashboard"></h1>
+          <p class="page-subtitle" data-i18n="dashboard.subtitle"></p>
         </div>
       </div>
 
@@ -73,7 +28,7 @@
             <img id="companyLogo" src="assets/images/logo.svg" alt="" class="hero-brand-logo" />
             <div class="hero-brand-copy">
               <h2 id="companyName" class="hero-brand-title">Eysto</h2>
-              <p id="companyDescription" class="hero-brand-tagline">Track products, stock levels and movements across your warehouses.</p>
+              <p id="companyDescription" class="hero-brand-tagline" data-i18n="dashboard.tagline"></p>
             </div>
           </div>
         </div>
@@ -81,12 +36,12 @@
         <div class="action-inline">
           <a class="btn btn-primary" href="products.html">
             <i data-lucide="package"></i>
-            <span>Products</span>
+            <span data-i18n="nav.products"></span>
           </a>
 
           <a class="btn btn-primary" href="sales.html">
             <i data-lucide="package-minus"></i>
-            <span>Stock Out</span>
+            <span data-i18n="nav.stockOut"></span>
           </a>
         </div>
       </section>
@@ -94,37 +49,37 @@
       <section class="grid grid-4 dashboard-grid">
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="package-search"></i>
-          <div class="stat-label">Total Products</div>
+          <div class="stat-label" data-i18n="dashboard.totalProducts"></div>
           <div class="stat-value" id="totalProducts">-</div>
-          <div class="metric-note">All products currently listed</div>
+          <div class="metric-note" data-i18n="dashboard.totalProductsNote"></div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="shield-alert"></i>
-          <div class="stat-label">Low Stock</div>
+          <div class="stat-label" data-i18n="dashboard.lowStock"></div>
           <div class="stat-value" id="lowStockCount">-</div>
-          <div class="metric-note" id="lowStockNote">Products with low stock</div>
+          <div class="metric-note" id="lowStockNote"></div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="boxes"></i>
-          <div class="stat-label">Stock Value</div>
+          <div class="stat-label" data-i18n="dashboard.stockValue"></div>
           <div class="stat-value" id="stockValue">-</div>
-          <div class="metric-note">Products with a price</div>
+          <div class="metric-note" data-i18n="dashboard.stockValueNote"></div>
         </div>
 
         <div class="card stat-card">
           <i class="kpi-icon" data-lucide="wallet"></i>
-          <div class="stat-label">Sales Revenue</div>
+          <div class="stat-label" data-i18n="dashboard.salesRevenue"></div>
           <div class="stat-value" id="totalRevenue">-</div>
-          <div class="metric-note" id="salesNote">Completed sales</div>
+          <div class="metric-note" id="salesNote"></div>
         </div>
       </section>
 
       <section class="card section-spacing">
         <div class="card-header">
-          <h3>Low Stock Products</h3>
-          <a class="btn btn-secondary" href="products.html?low_stock=1">View all</a>
+          <h3 data-i18n="dashboard.lowStockTitle"></h3>
+          <a class="btn btn-secondary" href="products.html?low_stock=1" data-i18n="common.viewAll"></a>
         </div>
 
         <div class="card-body">
@@ -132,10 +87,10 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>Product</th>
-                  <th>Category</th>
-                  <th>In Stock</th>
-                  <th>Minimum</th>
+                  <th data-i18n="col.product"></th>
+                  <th data-i18n="col.category"></th>
+                  <th data-i18n="col.inStock"></th>
+                  <th data-i18n="col.minimum"></th>
                 </tr>
               </thead>
               <tbody id="lowStockTable"></tbody>
@@ -146,7 +101,8 @@
 
       <section class="card section-spacing">
         <div class="card-header">
-          <h3>Recent Stock Outs</h3>
+          <h3 data-i18n="dashboard.recentStockOuts"></h3>
+          <a class="btn btn-secondary" href="sales-history.html" data-i18n="common.viewAll"></a>
         </div>
 
         <div class="card-body recent-sales-list">
@@ -154,11 +110,11 @@
             <table class="table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Reason</th>
-                  <th>Total</th>
-                  <th>Status</th>
-                  <th>Date</th>
+                  <th data-i18n="col.id"></th>
+                  <th data-i18n="col.reason"></th>
+                  <th data-i18n="col.total"></th>
+                  <th data-i18n="col.status"></th>
+                  <th data-i18n="col.date"></th>
                 </tr>
               </thead>
               <tbody id="recentSalesTable"></tbody>
@@ -169,7 +125,7 @@
     </main>
   </div>
 
-  <script type="module" src="assets/js/dashboard.js?v=5"></script>
+  <script type="module" src="assets/js/dashboard.js?v=6"></script>
   <script>
     lucide.createIcons();
   </script>
