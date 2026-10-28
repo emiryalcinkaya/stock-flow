@@ -19,14 +19,20 @@ Eysto is a general-purpose stock tracking system: it fits a hardware store, a fo
 - **Per-product minimum stock** – each product can have its own warning level; low-stock products are listed on the dashboard
 - **Optional prices** – track by quantity only, or add a price to get stock value and sales revenue
 - **Warehouses** – stock per location with transfers between them; single-location setups never see warehouse choices
-- **Stock in / stock out** – with notes (supplier, document no) and stock-out reasons: sale, internal use, waste, return to supplier, other
+- **Stock in from suppliers** – record the supplier, unit cost and document number; the latest cost becomes the product's cost price
+- **Stock out** – with stock-out reasons: sale, internal use, waste, return to supplier, other
+- **Stock counts** – count a warehouse (or one category), enter what is on the shelves and complete the count to book the differences as corrections
 - **Concurrency-safe** – stock outs run in a single transaction with row locking, so two users can never take the same last unit
 - **Snapshots** – each stock-out line stores the product name, barcode, unit and price at that moment
 - **Cancellation** – admins can cancel a stock out; items go back to the same warehouse
 - **Audit log** – every stock change is recorded with warehouse, user and note, and shown as a per-product history
-- **Roles** – `admin` manages products, stock and settings; `cashier` records stock outs and views stock
+- **Users & roles** – admins add users, change roles, reset passwords and deactivate accounts; staff record stock outs, enter counts and view stock; everyone can change their own password
+- **Reports** – monthly stock in/out, sales revenue, estimated gross profit, most moved products, slow movers, stock value per warehouse and purchases per supplier
+- **CSV import & export** – Excel-compatible (including `;` separators and decimal commas used by Turkish and German Excel); imports are previewed first and saved all-or-nothing
+- **Languages & currencies** – English, Turkish and German interface; prices shown in TRY, USD or EUR
 - **Your branding** – the business name, description and logo set in Settings appear on the dashboard
 - **Dashboard** – product count, low-stock list, stock value, sales revenue and recent stock outs
+- **Paging** – long lists are loaded 50 rows at a time
 
 ## Design decisions
 
@@ -101,7 +107,7 @@ python -m app.db.seed         # roles + demo users
 uvicorn app.main:app --reload
 
 # 3. Frontend (in another terminal) – ES modules need to be served over HTTP
-python -m http.server 5500 --directory frontend
+python scripts/serve_frontend.py   # serves frontend/ on port 5500 without browser caching
 ```
 
 Open http://localhost:5500 and sign in.
@@ -145,7 +151,7 @@ Interactive docs are available at `/docs` when the API is running.
 | --- | --- | --- |
 | `POST` | `/api/v1/auth/login` | public |
 | `GET` | `/api/v1/auth/me` | any |
-| `GET` | `/api/v1/products/?search=&category_id=&low_stock=&status=active\|archived&skip=&limit=` | any (archived: admin) |
+| `GET` | `/api/v1/products/?search=&category_id=&low_stock=&sort=&status=active\|archived&skip=&limit=` | any (archived: admin) |
 | `POST` | `/api/v1/products/` | admin |
 | `PATCH` / `DELETE` | `/api/v1/products/{id}` | admin |
 | `POST` | `/api/v1/products/{id}/increase-stock` · `/decrease-stock` · `/transfer` · `/restore` | admin |
@@ -155,7 +161,15 @@ Interactive docs are available at `/docs` when the API is running.
 | `POST` | `/api/v1/sales/{id}/cancel` | admin |
 | `GET` | `/api/v1/units` · `/api/v1/categories` · `/api/v1/warehouses` · `/api/v1/warehouses/{id}/stock` | any |
 | `POST` / `PATCH` / `DELETE` | `/api/v1/categories/{id}` · `POST` / `PATCH` `/api/v1/warehouses/{id}` | admin |
-| `GET` / `PATCH` | `/api/v1/company` (business name, description, logo) | any / admin |
+| `GET` / `PATCH` | `/api/v1/company` (business name, description, logo, currency) | any / admin |
+| `GET` · `POST` / `PATCH` | `/api/v1/suppliers` · `/api/v1/suppliers/{id}` | any · admin |
+| `GET` / `PATCH` | `/api/v1/stock-counts` · `/api/v1/stock-counts/{id}` (enter counted quantities) | any |
+| `POST` | `/api/v1/stock-counts` · `/{id}/complete` · `/{id}/cancel` | admin |
+| `GET` / `POST` / `PATCH` | `/api/v1/users` · `/api/v1/users/{id}` · `/{id}/reset-password` | admin |
+| `POST` | `/api/v1/auth/change-password` | any |
+| `GET` | `/api/v1/reports/overview?date_from=&date_to=` | any |
+| `GET` | `/api/v1/products/export.csv` · `/api/v1/reports/movements.csv` · `/api/v1/reports/stock-outs.csv` | any |
+| `POST` | `/api/v1/products/import` (CSV text, `dry_run` preview) | admin |
 | `GET` | `/api/v1/dashboard/summary` | any |
 | `GET` | `/api/v1/health` | public |
 
@@ -175,13 +189,10 @@ The suite covers authentication, permissions, stock rules, sale rollback, snapsh
 
 ## Roadmap
 
-- Stock counting with difference correction
-- Suppliers and purchase orders
-- User management screens (create / deactivate users, change password)
-- Reports: slow-moving items, monthly in/out summary, stock value over time
-- Excel / CSV import and export
+- Purchase orders (order from a supplier, receive partially or in full)
 - Batch and expiry date tracking (opt-in per product)
-- Turkish interface
+- Native `.xlsx` import and export
+- Barcode scanning with the device camera
 
 ## License
 
