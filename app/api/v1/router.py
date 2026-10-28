@@ -3,6 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.company import router as company_router
 from app.api.v1.endpoints.dashboard import router as dashboard_router
 from app.api.v1.endpoints.inventory import router as inventory_router
 from app.api.v1.endpoints.products import router as products_router
@@ -15,6 +16,7 @@ api_router.include_router(auth_router)
 api_router.include_router(products_router)
 api_router.include_router(sales_router)
 api_router.include_router(inventory_router)
+api_router.include_router(company_router)
 api_router.include_router(dashboard_router)
 
 

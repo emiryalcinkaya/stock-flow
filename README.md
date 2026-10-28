@@ -25,6 +25,7 @@ Eysto is a general-purpose stock tracking system: it fits a hardware store, a fo
 - **Cancellation** – admins can cancel a stock out; items go back to the same warehouse
 - **Audit log** – every stock change is recorded with warehouse, user and note, and shown as a per-product history
 - **Roles** – `admin` manages products, stock and settings; `cashier` records stock outs and views stock
+- **Your branding** – the business name, description and logo set in Settings appear on the dashboard
 - **Dashboard** – product count, low-stock list, stock value, sales revenue and recent stock outs
 
 ## Design decisions
@@ -154,6 +155,7 @@ Interactive docs are available at `/docs` when the API is running.
 | `POST` | `/api/v1/sales/{id}/cancel` | admin |
 | `GET` | `/api/v1/units` · `/api/v1/categories` · `/api/v1/warehouses` · `/api/v1/warehouses/{id}/stock` | any |
 | `POST` / `PATCH` / `DELETE` | `/api/v1/categories/{id}` · `POST` / `PATCH` `/api/v1/warehouses/{id}` | admin |
+| `GET` / `PATCH` | `/api/v1/company` (business name, description, logo) | any / admin |
 | `GET` | `/api/v1/dashboard/summary` | any |
 | `GET` | `/api/v1/health` | public |
 

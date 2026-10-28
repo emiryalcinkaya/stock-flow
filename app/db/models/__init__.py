@@ -1,4 +1,5 @@
 from app.db.models.category import Category
+from app.db.models.company import CompanyProfile
 from app.db.models.product import Product
 from app.db.models.role import Role
 from app.db.models.sale import Sale
@@ -9,6 +10,7 @@ from app.db.models.warehouse import StockLevel, Warehouse
 
 __all__ = [
     "Category",
+    "CompanyProfile",
     "Product",
     "Role",
     "Sale",
