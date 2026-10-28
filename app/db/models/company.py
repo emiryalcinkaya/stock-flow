@@ -14,4 +14,6 @@ class CompanyProfile(Base):
     description = Column(String(300), nullable=True)
     # Small image stored as a data URL, so no file storage is needed.
     logo = Column(Text, nullable=True)
+    # ISO 4217 code used to display every price and value in the app.
+    currency = Column(String(3), nullable=False, default="USD", server_default="USD")
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

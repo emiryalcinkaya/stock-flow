@@ -62,6 +62,10 @@ def change_stock(
     user_id: Optional[int] = None,
     sale_id: Optional[int] = None,
     note: Optional[str] = None,
+    supplier_id: Optional[int] = None,
+    unit_cost: Optional[Decimal] = None,
+    document_no: Optional[str] = None,
+    stock_count_id: Optional[int] = None,
 ) -> None:
     """Apply a stock change in one warehouse and write it to the audit log.
 
@@ -91,9 +95,13 @@ def change_stock(
             warehouse_id=warehouse.id,
             user_id=user_id,
             sale_id=sale_id,
+            stock_count_id=stock_count_id,
+            supplier_id=supplier_id,
             change=change,
             quantity_after=product.stock_quantity,
             reason=reason,
+            unit_cost=unit_cost,
+            document_no=document_no,
             note=note,
         )
     )

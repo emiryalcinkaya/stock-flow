@@ -4,10 +4,11 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.config import settings
 from app.core.rate_limit import LoginRateLimiter
-from app.core.security import DUMMY_PASSWORD_HASH, create_access_token, verify_password
+from app.core.security import DUMMY_PASSWORD_HASH, create_access_token, hash_password, verify_password
 from app.db.models.user import User
 from app.db.session import get_db
 from app.schemas.auth import CurrentUserResponse, LoginRequest, LoginResponse
+from app.schemas.people import PasswordChange
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -62,3 +63,19 @@ def read_current_user(current_user: User = Depends(get_current_user)):
         email=current_user.email,
         role=current_user.role.name if current_user.role else "",
     )
+
+
+@router.post("/change-password")
+def change_password(
+    data: PasswordChange,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    if not verify_password(data.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+    if data.new_password == data.current_password:
+        raise HTTPException(status_code=400, detail="New password must be different")
+
+    current_user.hashed_password = hash_password(data.new_password)
+    db.commit()
+    return {"message": "Password updated"}

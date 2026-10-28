@@ -4,7 +4,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session, joinedload
 
 from app.api.deps import ADMIN, get_current_user, require_role
@@ -131,6 +131,7 @@ def create_sale(
 
 @router.get("/", response_model=List[SaleResponse])
 def get_sales(
+    response: Response,
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     status: Optional[str] = Query(default=None, pattern="^(completed|cancelled)$"),
@@ -155,6 +156,7 @@ def get_sales(
     if warehouse_id is not None:
         query = query.filter(Sale.warehouse_id == warehouse_id)
 
+    response.headers["X-Total-Count"] = str(query.count())
     return query.order_by(Sale.id.desc()).offset(skip).limit(limit).all()
 
 

@@ -33,7 +33,10 @@ def update_company(
 
     # Only the fields that were sent are changed; null clears a field.
     for field in data.model_fields_set:
-        setattr(profile, field, getattr(data, field))
+        value = getattr(data, field)
+        if field == "currency" and value is None:
+            continue  # currency can't be cleared, only changed
+        setattr(profile, field, value)
 
     db.commit()
     db.refresh(profile)

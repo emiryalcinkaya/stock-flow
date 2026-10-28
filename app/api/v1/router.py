@@ -7,7 +7,11 @@ from app.api.v1.endpoints.company import router as company_router
 from app.api.v1.endpoints.dashboard import router as dashboard_router
 from app.api.v1.endpoints.inventory import router as inventory_router
 from app.api.v1.endpoints.products import router as products_router
+from app.api.v1.endpoints.reports import router as reports_router
 from app.api.v1.endpoints.sales import router as sales_router
+from app.api.v1.endpoints.stock_counts import router as stock_counts_router
+from app.api.v1.endpoints.suppliers import router as suppliers_router
+from app.api.v1.endpoints.users import router as users_router
 from app.db.session import get_db
 
 api_router = APIRouter()
@@ -17,6 +21,10 @@ api_router.include_router(products_router)
 api_router.include_router(sales_router)
 api_router.include_router(inventory_router)
 api_router.include_router(company_router)
+api_router.include_router(suppliers_router)
+api_router.include_router(stock_counts_router)
+api_router.include_router(users_router)
+api_router.include_router(reports_router)
 api_router.include_router(dashboard_router)
 
 

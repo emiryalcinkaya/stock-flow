@@ -14,6 +14,7 @@ class Product(Base):
         CheckConstraint("stock_quantity >= 0", name="ck_products_stock_non_negative"),
         CheckConstraint("price > 0", name="ck_products_price_positive"),
         CheckConstraint("min_stock >= 0", name="ck_products_min_stock_non_negative"),
+        CheckConstraint("cost_price >= 0", name="ck_products_cost_price_non_negative"),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -23,6 +24,8 @@ class Product(Base):
     unit = Column(String(10), nullable=False, default="pcs", server_default="pcs")
     # Price is optional: without it the product is tracked by quantity only.
     price = Column(Numeric(10, 2), nullable=True)
+    # Purchase cost; updated by the latest stock in that came with a unit cost.
+    cost_price = Column(Numeric(10, 2), nullable=True)
     # Per-product warning level; falls back to the global low_stock_threshold when empty.
     min_stock = Column(QUANTITY, nullable=True)
     # Total over all warehouses. Kept in sync with stock_levels by app.services.stock.
