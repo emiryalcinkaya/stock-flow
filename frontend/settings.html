@@ -6,7 +6,7 @@
   <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
   <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/main.css?v=7" />
+  <link rel="stylesheet" href="assets/css/main.css?v=8" />
   <link rel="stylesheet" href="assets/css/products.css?v=7" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
@@ -23,23 +23,6 @@
       </div>
 
       <section class="card">
-        <div class="card-header">
-          <h3 data-i18n="common.language"></h3>
-        </div>
-        <div class="card-body">
-          <div class="form-grid">
-            <div class="field">
-              <label for="languageSelect" data-i18n="common.language"></label>
-              <div class="select-shell">
-                <select id="languageSelect" class="select"></select>
-              </div>
-            </div>
-          </div>
-          <p class="metric-note section-spacing" data-i18n="account.languageHint"></p>
-        </div>
-      </section>
-
-      <section class="card section-spacing">
         <div class="card-header">
           <h3 data-i18n="settings.business"></h3>
         </div>
@@ -200,12 +183,13 @@
           </div>
         </div>
       </section>
+
       <section class="card section-spacing" id="users">
         <div class="card-header">
-          <h3 data-i18n="users.addTitle"></h3>
+          <h3 data-i18n="users.listTitle"></h3>
         </div>
         <div class="card-body">
-          <form id="userForm" class="form-grid">
+          <form id="userForm" class="form-grid user-form">
             <div class="field">
               <label for="fullName" data-i18n="field.fullName"></label>
               <input id="fullName" class="input" type="text" maxlength="100" required />
@@ -231,22 +215,15 @@
               <label for="password"><span data-i18n="login.password"></span> <span class="field-hint" data-i18n="users.passwordHint"></span></label>
               <input id="password" class="input" type="password" minlength="8" maxlength="128" autocomplete="new-password" required />
             </div>
-            <div style="grid-column: 1 / -1;">
+            <div class="user-form-submit">
               <button id="addUserButton" class="btn btn-primary icon-btn" type="submit">
                 <i data-lucide="user-plus"></i>
                 <span data-i18n="users.add"></span>
               </button>
             </div>
           </form>
-        </div>
-      </section>
 
-      <section class="card section-spacing">
-        <div class="card-header">
-          <h3 data-i18n="users.listTitle"></h3>
-        </div>
-        <div class="card-body">
-          <div class="table-wrap">
+          <div class="table-wrap section-spacing">
             <table class="table">
               <thead>
                 <tr>
@@ -261,6 +238,19 @@
               <tbody id="usersTable"></tbody>
             </table>
           </div>
+        </div>
+      </section>
+
+      <section class="card section-spacing language-strip">
+        <div class="language-strip-text">
+          <i data-lucide="languages"></i>
+          <div>
+            <strong data-i18n="common.language"></strong>
+            <span class="metric-note" data-i18n="account.languageHint"></span>
+          </div>
+        </div>
+        <div class="select-shell">
+          <select id="languageSelect" class="select" data-i18n-aria-label="common.language"></select>
         </div>
       </section>
     </main>
