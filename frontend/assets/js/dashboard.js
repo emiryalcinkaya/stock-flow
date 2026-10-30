@@ -1,7 +1,7 @@
-import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage } from "./auth.js?v=8";
-import { t } from "./i18n.js?v=7";
-import { formatQuantity, reasonLabel } from "./inventory.js?v=7";
+import { apiFetch, readJson } from "./config.js?v=9";
+import { initProtectedPage } from "./auth.js?v=9";
+import { t } from "./i18n.js?v=9";
+import { formatQuantity, reasonLabel } from "./inventory.js?v=9";
 import {
   escapeHtml,
   formatCurrency,
@@ -10,7 +10,7 @@ import {
   renderEmptyRow,
   showToast,
   statusBadge
-} from "./ui.js?v=7";
+} from "./ui.js?v=9";
 
 const totalProductsEl = document.getElementById("totalProducts");
 const lowStockCountEl = document.getElementById("lowStockCount");

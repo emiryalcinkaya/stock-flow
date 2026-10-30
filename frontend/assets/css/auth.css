@@ -124,3 +124,20 @@
 .auth-footer span {
   margin-right: 4px;
 }
+
+/* Phones: the language picker gets its own row above the card. */
+@media (max-width: 640px) {
+  .auth-page {
+    padding: 72px 16px 24px;
+  }
+
+  .auth-language {
+    top: 16px;
+    right: 16px;
+  }
+
+  .auth-brand-logo {
+    width: 72px;
+    height: 72px;
+  }
+}

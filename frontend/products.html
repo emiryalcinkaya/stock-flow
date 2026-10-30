@@ -6,8 +6,9 @@
   <title>Eysto</title>
   <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg?v=2" />
   <script>try{if(localStorage.getItem("sidebarCollapsed")==="1")document.documentElement.classList.add("sidebar-collapsed")}catch(e){}</script>
-  <link rel="stylesheet" href="assets/css/main.css?v=7" />
-  <link rel="stylesheet" href="assets/css/products.css?v=7" />
+  <link rel="stylesheet" href="assets/css/main.css?v=9" />
+  <link rel="stylesheet" href="assets/css/products.css?v=9" />
+  <link rel="stylesheet" href="assets/css/mobile.css?v=9" />
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
 </head>
 <body data-page="products" data-title-key="nav.products">
@@ -32,7 +33,7 @@
         </div>
       </div>
 
-      <section class="card product-form-card" data-role="admin">
+      <section class="card product-form-card" data-role="admin" data-mobile-collapse>
         <div class="card-header">
           <h3 data-i18n="products.addTitle"></h3>
         </div>
@@ -453,7 +454,7 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/products.js?v=7"></script>
+  <script type="module" src="assets/js/products.js?v=9"></script>
   <script>
     lucide.createIcons();
   </script>

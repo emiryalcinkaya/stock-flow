@@ -12,6 +12,8 @@ const en = {
   "nav.account": "My Account",
   "nav.logout": "Logout",
   "nav.collapse": "Collapse sidebar",
+  "nav.menu": "Menu",
+  "nav.closeMenu": "Close menu",
   "nav.expand": "Expand sidebar",
 
   // Common
@@ -461,6 +463,8 @@ const tr = {
   "nav.account": "Hesabım",
   "nav.logout": "Çıkış Yap",
   "nav.collapse": "Menüyü daralt",
+  "nav.menu": "Menü",
+  "nav.closeMenu": "Menüyü kapat",
   "nav.expand": "Menüyü genişlet",
 
   "common.active": "Aktif",
@@ -896,6 +900,8 @@ const de = {
   "nav.account": "Mein Konto",
   "nav.logout": "Abmelden",
   "nav.collapse": "Menü einklappen",
+  "nav.menu": "Menü",
+  "nav.closeMenu": "Menü schließen",
   "nav.expand": "Menü ausklappen",
 
   "common.active": "Aktiv",

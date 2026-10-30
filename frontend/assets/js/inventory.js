@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js?v=7";
-import { t } from "./i18n.js?v=7";
-import { escapeHtml, formatNumber } from "./ui.js?v=7";
+import { apiFetch, readJson } from "./config.js?v=9";
+import { t } from "./i18n.js?v=9";
+import { escapeHtml, formatNumber } from "./ui.js?v=9";
 
 // Shared lookups (units, categories, warehouses, suppliers) used by several pages.
 

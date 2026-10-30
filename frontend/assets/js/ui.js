@@ -1,5 +1,5 @@
-import { apiFetch } from "./config.js?v=7";
-import { getLocale, t, translateApiError } from "./i18n.js?v=7";
+import { apiFetch } from "./config.js?v=9";
+import { getLocale, t, translateApiError } from "./i18n.js?v=9";
 
 const HTML_ESCAPES = {
   "&": "&amp;",

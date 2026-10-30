@@ -7,10 +7,10 @@ import {
   readJson,
   setCachedUser,
   setToken
-} from "./config.js?v=7";
-import { applyTranslations, getLanguage, LANGUAGES, setLanguage, t } from "./i18n.js?v=7";
-import { renderSidebar } from "./layout.js?v=7";
-import { getErrorMessage, setButtonLoading, setCurrency, showToast } from "./ui.js?v=7";
+} from "./config.js?v=9";
+import { applyTranslations, getLanguage, LANGUAGES, setLanguage, t } from "./i18n.js?v=9";
+import { renderSidebar } from "./layout.js?v=9";
+import { getErrorMessage, setButtonLoading, setCurrency, showToast } from "./ui.js?v=9";
 
 const COMPANY_KEY = "companyLoaded";
 

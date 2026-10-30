@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage } from "./auth.js?v=8";
-import { t } from "./i18n.js?v=7";
+import { apiFetch, readJson } from "./config.js?v=9";
+import { initProtectedPage } from "./auth.js?v=9";
+import { t } from "./i18n.js?v=9";
 import {
   formatQuantity,
   isWholeUnit,
@@ -11,7 +11,7 @@ import {
   reasonOptions,
   unitLabel,
   warehouseOptions
-} from "./inventory.js?v=7";
+} from "./inventory.js?v=9";
 import {
   escapeHtml,
   formatCurrency,
@@ -20,7 +20,7 @@ import {
   renderEmptyState,
   setButtonLoading,
   showToast
-} from "./ui.js?v=7";
+} from "./ui.js?v=9";
 
 const reasonSelect = document.getElementById("reasonSelect");
 const warehouseSelect = document.getElementById("warehouseSelect");

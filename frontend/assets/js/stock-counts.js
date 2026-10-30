@@ -1,6 +1,6 @@
-import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage, isAdmin } from "./auth.js?v=8";
-import { t } from "./i18n.js?v=7";
+import { apiFetch, readJson } from "./config.js?v=9";
+import { initProtectedPage, isAdmin } from "./auth.js?v=9";
+import { t } from "./i18n.js?v=9";
 import {
   categoryOptions,
   formatQuantity,
@@ -10,7 +10,7 @@ import {
   optionalNumber,
   quantityStep,
   warehouseOptions
-} from "./inventory.js?v=7";
+} from "./inventory.js?v=9";
 import {
   escapeHtml,
   formatDate,
@@ -23,7 +23,7 @@ import {
   showToast,
   statusBadge,
   totalCount
-} from "./ui.js?v=7";
+} from "./ui.js?v=9";
 
 const $ = (id) => document.getElementById(id);
 

@@ -1,0 +1,456 @@
+/*
+ * Phone and tablet layout. Every rule lives inside a max-width media query,
+ * so the desktop layout (wider than 860px) is untouched by this file.
+ * The menu button is the one exception: it only exists for small screens.
+ */
+
+.mobile-menu-toggle {
+  display: none;
+}
+
+@media (max-width: 860px) {
+  /* ----- Top bar with a full-screen menu ----- */
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 1100;
+    padding: 10px 16px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .brand {
+    margin-bottom: 0;
+    padding: 0;
+    gap: 10px;
+  }
+
+  .brand-logo {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brand-title {
+    font-size: 22px;
+  }
+
+  .mobile-menu-toggle {
+    margin-left: auto;
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .mobile-menu-toggle i,
+  .mobile-menu-toggle svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sidebar .nav,
+  .sidebar .sidebar-footer {
+    display: none;
+  }
+
+  .nav-open .sidebar {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto;
+    background: var(--bg);
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .nav-open .sidebar .nav {
+    display: flex;
+    margin-top: 20px;
+    gap: 6px;
+  }
+
+  .nav-open .sidebar .sidebar-footer {
+    display: block;
+    padding-top: 20px;
+  }
+
+  .nav-open body {
+    overflow: hidden;
+  }
+
+  .nav-link:hover,
+  .nav-link.active {
+    transform: none;
+  }
+
+  /* ----- Page frame ----- */
+
+  .content {
+    padding: 20px 16px calc(28px + env(safe-area-inset-bottom));
+    min-width: 0;
+  }
+
+  .topbar {
+    margin-bottom: 20px;
+    gap: 14px;
+  }
+
+  .page-title {
+    font-size: 30px;
+  }
+
+  .topbar-actions {
+    width: 100%;
+  }
+
+  .topbar-actions .btn {
+    flex: 1 1 0;
+    justify-content: center;
+    padding-left: 12px;
+    padding-right: 12px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .card-header {
+    padding: 18px 18px 0;
+  }
+
+  .card-body {
+    padding: 18px;
+  }
+
+  .section-spacing {
+    margin-top: 16px;
+  }
+
+  .grid {
+    gap: 16px;
+  }
+
+  /* Bigger touch targets. */
+  .btn {
+    min-height: 44px;
+  }
+
+  /* ----- Filters ----- */
+
+  .table-filters {
+    width: 100%;
+  }
+
+  .table-filters > * {
+    flex: 1 1 100%;
+  }
+
+  .table-filters .select-shell {
+    min-width: 0;
+  }
+
+  .filter-toggle {
+    justify-content: center;
+  }
+
+  /* ----- Pagination ----- */
+
+  .pagination {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
+
+  .pagination-range {
+    flex: 1 1 100%;
+    text-align: center;
+  }
+
+  .pagination .btn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  /* ----- Modals become sheets that scroll ----- */
+
+  .modal-overlay {
+    padding: 12px;
+    align-items: flex-end;
+  }
+
+  .modal {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
+    border-radius: 24px;
+  }
+
+  .modal-header {
+    padding: 22px 20px 10px;
+  }
+
+  .modal-body {
+    padding: 10px 20px 20px;
+  }
+
+  .modal-footer {
+    padding: 14px 20px calc(18px + env(safe-area-inset-bottom));
+    flex-wrap: wrap;
+  }
+
+  .modal-footer .btn {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .icon-chip {
+    width: 44px;
+    height: 44px;
+  }
+
+  .quantity-stepper {
+    min-width: 0;
+  }
+
+  .stock-pill {
+    white-space: nowrap;
+  }
+
+  /* ----- Toasts span the bottom of the screen ----- */
+
+  .toast {
+    left: 16px;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    text-align: center;
+  }
+
+  /* ----- Cards that start folded on phones (e.g. "New product") ----- */
+
+  .mobile-collapsible > .card-header {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-collapsible > .card-header::after {
+    content: "";
+    width: 9px;
+    height: 9px;
+    border-right: 2px solid var(--muted);
+    border-bottom: 2px solid var(--muted);
+    transform: rotate(45deg);
+    margin: -4px 4px 0 0;
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-collapsible.is-folded > .card-header {
+    padding-bottom: 18px;
+  }
+
+  .mobile-collapsible.is-folded > .card-header::after {
+    transform: rotate(-45deg);
+    margin-top: 0;
+  }
+
+  .mobile-collapsible.is-folded > .card-body {
+    display: none;
+  }
+
+  /* ----- Settings ----- */
+
+  .user-form {
+    grid-template-columns: 1fr;
+  }
+
+  .language-strip .select-shell {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-title {
+    font-size: 28px;
+  }
+
+  /* KPI cards: two per row, values shrink instead of spilling out. */
+  .stat-card {
+    padding: 16px;
+  }
+
+  .stat-value {
+    font-size: clamp(18px, 5.6vw, 26px);
+    overflow-wrap: anywhere;
+  }
+
+  .stat-label,
+  .metric-note {
+    overflow-wrap: anywhere;
+  }
+
+  .grid-4 {
+    gap: 12px;
+  }
+
+  .hero-card {
+    padding: 20px;
+  }
+
+  /* ----- Tables turn into one card per row ----- */
+
+  .table-wrap {
+    overflow-x: visible;
+  }
+
+  .table thead {
+    display: none;
+  }
+
+  .table,
+  .table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .table tr {
+    display: flex;
+    flex-direction: column;
+    padding: 14px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  .table tbody tr:first-child {
+    border-top: none;
+    padding-top: 4px;
+  }
+
+  .table td,
+  .table-wrap .table td[class] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 5px 0 !important;
+    border-top: none;
+    text-align: right;
+    white-space: normal !important;
+    min-width: 0 !important;
+    width: auto !important;
+    overflow-wrap: anywhere;
+  }
+
+  .table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    flex-shrink: 0;
+    max-width: 50%;
+  }
+
+  .table td:not([data-label])::before,
+  .table td[data-label=""]::before {
+    content: none;
+  }
+
+  /* The row's name becomes its title. */
+  .table td:has(> strong:first-child) {
+    order: -1;
+    justify-content: flex-start;
+    text-align: left;
+    font-size: 16px;
+    padding-bottom: 8px !important;
+  }
+
+  .table td:has(> strong:first-child)::before {
+    content: none;
+  }
+
+  /* Empty-state rows. */
+  .table td[colspan] {
+    display: block;
+    text-align: center;
+  }
+
+  .table td[colspan]::before {
+    content: none;
+  }
+
+  /* Action buttons sit on their own line at the bottom of the card. */
+  .table td:has(.btn) {
+    display: block;
+    order: 10;
+    padding-top: 10px !important;
+    text-align: left;
+  }
+
+  .table td:has(.btn)::before {
+    content: none;
+  }
+
+  .table td:has(.btn) > .btn,
+  .table td:has(.btn) > .btn + .btn {
+    margin: 0 6px 6px 0;
+  }
+
+  .row-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .row-actions .btn {
+    flex: 1 1 calc(50% - 8px);
+    width: auto;
+    justify-content: center;
+  }
+
+  .row-actions .btn i,
+  .row-actions .btn svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  /* Stock count lines: the counted input keeps a usable size. */
+  .table td:has(.count-input) {
+    display: flex;
+    order: 0;
+    padding-top: 5px !important;
+  }
+
+  .table td:has(.count-input)::before {
+    content: attr(data-label);
+  }
+
+  .count-actions {
+    flex-wrap: wrap;
+  }
+
+  .count-actions .metric-note {
+    flex: 1 1 100%;
+  }
+
+  .count-actions .btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .count-input {
+    max-width: 150px;
+    text-align: right;
+  }
+
+  .bar-chart {
+    gap: 12px;
+    height: 180px;
+  }
+}

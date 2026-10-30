@@ -1,5 +1,5 @@
-import { t } from "./i18n.js?v=7";
-import { escapeHtml, refreshIcons } from "./ui.js?v=7";
+import { t } from "./i18n.js?v=9";
+import { escapeHtml, refreshIcons } from "./ui.js?v=9";
 
 // The sidebar is built here once instead of being copied into every page.
 
@@ -40,6 +40,7 @@ export function renderSidebar(user) {
         <div class="brand-title">Eysto</div>
       </div>
       <button type="button" class="sidebar-toggle"></button>
+      <button type="button" class="mobile-menu-toggle" aria-expanded="false"></button>
     </div>
 
     <nav class="nav">${links}</nav>
@@ -57,6 +58,9 @@ export function renderSidebar(user) {
   `;
 
   initSidebarToggle(sidebar.querySelector(".sidebar-toggle"));
+  initMobileMenu(sidebar.querySelector(".mobile-menu-toggle"));
+  initTableLabels();
+  initMobileCollapsibles();
   refreshIcons();
 }
 
@@ -82,4 +86,108 @@ function initSidebarToggle(button) {
   });
 
   render();
+}
+
+// ----- Phones (see mobile.css; none of this shows on desktop) -----
+
+const SMALL_SCREEN = window.matchMedia("(max-width: 860px)");
+
+function initMobileMenu(button) {
+  const root = document.documentElement;
+
+  const render = () => {
+    const open = root.classList.contains("nav-open");
+    const label = t(open ? "nav.closeMenu" : "nav.menu");
+    button.setAttribute("aria-label", label);
+    button.setAttribute("aria-expanded", String(open));
+    button.title = label;
+    button.innerHTML = `<i data-lucide="${open ? "x" : "menu"}"></i>`;
+    refreshIcons();
+  };
+
+  const setOpen = (open) => {
+    root.classList.toggle("nav-open", open);
+    render();
+  };
+
+  button.addEventListener("click", () => setOpen(!root.classList.contains("nav-open")));
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && root.classList.contains("nav-open")) setOpen(false);
+  });
+  // Rotating or resizing to desktop width must not leave the page locked.
+  window.matchMedia("(min-width: 861px)").addEventListener("change", (e) => {
+    if (e.matches) setOpen(false);
+  });
+
+  render();
+}
+
+// On phones each table row is shown as a card; every cell needs its column name.
+function labelTable(table) {
+  const headers = [...table.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+  if (!headers.length) return;
+
+  for (const body of table.tBodies) {
+    for (const row of body.rows) {
+      let column = 0;
+      for (const cell of row.cells) {
+        if (cell.colSpan === 1 && cell.dataset.label !== headers[column]) {
+          cell.dataset.label = headers[column] || "";
+        }
+        column += cell.colSpan;
+      }
+    }
+  }
+}
+
+function initTableLabels() {
+  let queued = false;
+  const labelAll = () => {
+    queued = false;
+    document.querySelectorAll("table.table").forEach(labelTable);
+  };
+
+  // Rows are rendered by each page's script whenever data loads.
+  new MutationObserver(() => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(labelAll);
+  }).observe(document.body, { childList: true, subtree: true });
+
+  labelAll();
+}
+
+// Long forms such as "New product" start folded on phones so the list comes first.
+function initMobileCollapsibles() {
+  document.querySelectorAll("[data-mobile-collapse]").forEach((card) => {
+    const header = card.querySelector(":scope > .card-header");
+    if (!header) return;
+
+    card.classList.add("mobile-collapsible", "is-folded");
+
+    // Only a button on small screens; on desktop the header stays plain text.
+    const syncRole = () => {
+      if (SMALL_SCREEN.matches) {
+        header.setAttribute("role", "button");
+        header.tabIndex = 0;
+      } else {
+        header.removeAttribute("role");
+        header.removeAttribute("tabindex");
+      }
+    };
+    SMALL_SCREEN.addEventListener("change", syncRole);
+    syncRole();
+
+    const toggle = () => {
+      if (!SMALL_SCREEN.matches) return;
+      card.classList.toggle("is-folded");
+    };
+    header.addEventListener("click", toggle);
+    header.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
 }

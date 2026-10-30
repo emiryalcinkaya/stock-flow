@@ -1,7 +1,7 @@
-import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage, languageOptions } from "./auth.js?v=8";
-import { setLanguage, t } from "./i18n.js?v=7";
-import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, setCurrency, showToast } from "./ui.js?v=7";
+import { apiFetch, readJson } from "./config.js?v=9";
+import { initProtectedPage, languageOptions } from "./auth.js?v=9";
+import { setLanguage, t } from "./i18n.js?v=9";
+import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, setCurrency, showToast } from "./ui.js?v=9";
 
 const $ = (id) => document.getElementById(id);
 
