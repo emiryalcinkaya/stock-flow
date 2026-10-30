@@ -24,6 +24,23 @@
 
       <section class="card">
         <div class="card-header">
+          <h3 data-i18n="common.language"></h3>
+        </div>
+        <div class="card-body">
+          <div class="form-grid">
+            <div class="field">
+              <label for="languageSelect" data-i18n="common.language"></label>
+              <div class="select-shell">
+                <select id="languageSelect" class="select"></select>
+              </div>
+            </div>
+          </div>
+          <p class="metric-note section-spacing" data-i18n="account.languageHint"></p>
+        </div>
+      </section>
+
+      <section class="card section-spacing">
+        <div class="card-header">
           <h3 data-i18n="settings.business"></h3>
         </div>
         <div class="card-body">
@@ -295,7 +312,7 @@
     </div>
   </div>
 
-  <script type="module" src="assets/js/settings.js?v=7"></script>
+  <script type="module" src="assets/js/settings.js?v=8"></script>
   <script>
     lucide.createIcons();
   </script>

@@ -1,6 +1,6 @@
 import { apiFetch, readJson } from "./config.js?v=7";
-import { initProtectedPage } from "./auth.js?v=8";
-import { t } from "./i18n.js?v=7";
+import { initProtectedPage, languageOptions } from "./auth.js?v=8";
+import { setLanguage, t } from "./i18n.js?v=7";
 import { escapeHtml, getErrorMessage, refreshIcons, renderEmptyRow, setCurrency, showToast } from "./ui.js?v=7";
 
 const $ = (id) => document.getElementById(id);
@@ -467,6 +467,13 @@ document.addEventListener("keydown", (e) => {
 currentUser = await initProtectedPage({ adminOnly: true });
 
 if (currentUser) {
+  $("languageSelect").innerHTML = languageOptions();
+  $("languageSelect").addEventListener("change", () => {
+    setLanguage($("languageSelect").value);
+    // The sidebar and every label are rendered with the language, so start over.
+    window.location.reload();
+  });
+
   loadCompany();
   loadCategories();
   loadWarehouses();
